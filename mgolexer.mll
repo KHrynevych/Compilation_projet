@@ -6,27 +6,31 @@
   exception Error of string
 
   let keyword_or_ident =
-  let h = Hashtbl.create 17 in
-  List.iter (fun (s, k) -> Hashtbl.add h s k)
-    [ "package",    PACKAGE;
-      "import",     IMPORT;
-      "type",       TYPE;      
-      "struct",     STRUCT;    
-      "else",       ELSE;
-      "false",      FALSE;
-      "for",        FOR;
-      "func",       FUNC;
-      "if",         IF;
-      "import",     IMPORT;
-      "nil",        NIL;
-      "return",     RETURN;
-      "true",       TRUE;
-      "var",        VAR
-    ] ;
-  fun s ->
-    try  Hashtbl.find h s
-    with Not_found -> IDENT(s)
-        
+    let h = Hashtbl.create 23 in
+    List.iter (fun (s, k) -> Hashtbl.add h s k)
+      [ "package",    PACKAGE;
+        "import",     IMPORT;
+        "type",       TYPE;      
+        "struct",     STRUCT;    
+        "else",       ELSE;
+        "false",      FALSE;
+        "for",        FOR;
+        "func",       FUNC;
+        "if",         IF;
+        "nil",        NIL;
+        "return",     RETURN;
+        "true",       TRUE;
+        "var",        VAR
+      ] ;
+    fun s -> match Hashtbl.find_opt h s with some k -> k
+                                            | None -> IDENT s
+    let max_i64 = Int64.max_int64
+
+    let int64_of_lexeme s =
+      try
+        let n = Int64.of_string s in
+        if n < Int64.zero || n > max_i64 then raise Exit; n
+      with _ -> raise (Error "invalid or out-of-range integer literal")      
 }
 
 let digit = ['0'-'9']

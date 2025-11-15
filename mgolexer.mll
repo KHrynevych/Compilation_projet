@@ -8,18 +8,12 @@
   let keyword_or_ident =
     let h = Hashtbl.create 23 in
     List.iter (fun (s, k) -> Hashtbl.add h s k)
-      [ "package",    PACKAGE;
-        "import",     IMPORT;
-        "type",       TYPE;      
-        "struct",     STRUCT;    
-        "else",       ELSE;
-        "false",      FALSE;
-        "for",        FOR;
-        "func",       FUNC;
-        "if",         IF;
-        "nil",        NIL;
-        "return",     RETURN;
-        "true",       TRUE;
+      [ "package",    PACKAGE; "import",     IMPORT;
+        "type",       TYPE;    "struct",     STRUCT;    
+        "else",       ELSE;    "false",      FALSE;
+        "for",        FOR;     "func",       FUNC;
+        "if",         IF;      "nil",        NIL;
+        "return",     RETURN;  "true",       TRUE;
         "var",        VAR
       ] ;
     fun s -> match Hashtbl.find_opt h s with some k -> k
@@ -34,54 +28,33 @@
 }
 
 let digit = ['0'-'9']
-let number = digit+
+let hexd = ['0'-'9' 'a'-'f' 'A'-'F']
+let decint = digit+
+let hexint = ('0''x'| '0''X') hexd+
+let intlit = hexint | decint
 let alpha = ['a'-'z' 'A'-'Z' '_']
 let ident = alpha (alpha | digit)*
-let fmt = "fmt" 
-let hexa = ['0'-'9' 'a'-'f' 'A'-'F']
-let int = digit+ | ('0''x' | '0''X') (hexa)+
-let car = [' '-'!'] | ['#'-'['] | [']'-'~'] | '\\''\\' | '\\''"' | '\\''n' | '\\''t'
-let string = '"' car* '"'
+
   
 rule token = parse
-  | ['\n']            { new_line lexbuf; token lexbuf }
-  | [' ' '\t' '\r']+  { token lexbuf }
+  | [' ' '\t' '\r' '\n']+
 
-  | "/*"              { comment lexbuf; token lexbuf }
+  | "//" [^ '\n']*  { token lexbuf }
+  | "/*"            { comment lexbuf; token lexbuf }
 
-  | '"' fmt '"'       { STRING("fmt") }
-
-  | number as n  { try INT(Int64.of_string n) 
-                   with _ -> raise (Error "literal constant too large") }
+  | intlit as n  { INT(Int64.int64_of_lexeme n) }
   | ident as id  { keyword_or_ident id }
 
-  | ";"  { SEMI }
-  | "("  { LPAR }
-  | ")"  { RPAR }
-  | "{"  { BEGIN }
-  | "}"  { END }
-  | "*"  { STAR }
-  | "."  { POINT }
-  | ","  { COMMA }
+  | ";"  { SEMI } | "("  { LPAR } | ")"  { RPAR }
+  | "{"  { BEGIN } | "}"  { END } | "*"  { STAR }
+  | "."  { POINT } | ","  { COMMA }
 
-  | "==" { EQ }
-  | "!=" { NQ }
-  | "<=" { LE }
-  | ">=" { GE }
-  | "<"  { LT }
-  | ">"  { GT }
-  | "&&" { AND }
-  | "||" { OR }
-  | "+"  { PLUS }
-  | "-"  { MINUS }
-  | "/"  { SLASH }
-  | "++" { PPLUS }
-  | "--" { MMINUS }
-  | "!"  { NOT }
-  | "="  { ASSIGN }
-  | ":=" { DECL }
+  | "==" { EQ } | "!=" { NEQ } | "<=" { LE } | ">=" { GE }
+  | "<"  { LT } | ">"  { GT } | "&&" { AND } | "||" { OR }
+  | "+"  { PLUS } | "-"  { MINUS } | "/"  { SLASH }
+  | "++" { PPLUS } | "--" { MMINUS }
+  | "!"  { NOT } | "="  { ASSIGN } | ":=" { DECL }
   | "%"  { PERCENT }
-
 
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
@@ -91,3 +64,12 @@ and comment = parse
   | "*/" { () }
   | _    { comment lexbuf }
   | eof  { raise (Error "unterminated comment") }
+and string_lit buf = parse
+  | '"'         { STRING (Buffer.contents buf) }
+  | "\\\\"      { Buffer.add_char buf '\\'; string_lit buf lexbuf }
+  | "\\\""      { Buffer.add_char buf '"';  string_lit buf lexbuf }
+  | "\\n"       { Buffer.add_char buf '\n'; string_lit buf lexbuf }
+  | "\\t"       { Buffer.add_char buf '\t'; string_lit buf lexbuf }
+  | (['\032'-'\126'] # ['\\' '\"']) as c { Buffer.add_char buf c;    string_lit buf lexbuf }
+  | eof         { raise (Error "unterminated string literal") }
+  | _           { raise (Error "illegal character in string") }

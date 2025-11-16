@@ -10,12 +10,19 @@
 %token <int64> INT
 %token <string> IDENT
 %token <string> STRING
-%token PACKAGE IMPORT TYPE STRUCT
-%token LPAR RPAR BEGIN END SEMI STAR
+%token PACKAGE IMPORT TYPE STRUCT FUNC RETURN IF ELSE FOR VAR TRUE FALSE NIL
+
+%token LPAR RPAR BEGIN END COMMA SEMI DOT
+%token PLUS MINUS STAR SLASH PERCENT
+%token EQ NEQ LT LE GT GE
+%token AND OR ASSIGN DECL INCR DECR
 %token EOF
 
 %start prog
 %type <Mgoast.program> prog
+
+%left PLUS MINUS
+%left STAR SLASH PERCENT
 
 %%
 
@@ -36,7 +43,14 @@ decl:
 ;
 
 mgotype:
-  | STAR s=IDENT { TStruct(s) }
+  | STAR s=IDENT  { TStruct(s) }
+  | s=IDENT       {
+                    match s with
+                    | "int"    -> TInt
+                    | "bool"   -> TBool
+                    | "string" -> TString
+                    | _        -> TStruct s
+                    }
 ;
 
 varstyp:

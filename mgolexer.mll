@@ -16,7 +16,7 @@
         "return",     RETURN;  "true",       TRUE;
         "var",        VAR
       ] ;
-    fun s -> match Hashtbl.find_opt h s with some k -> k
+    fun s -> match Hashtbl.find_opt h s with Some k -> k
                                             | None -> IDENT s
     let max_i64 = Int64.max_int64
 

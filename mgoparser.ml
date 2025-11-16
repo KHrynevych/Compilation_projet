@@ -1,58 +1,70 @@
 
-type token = 
-  | VAR
-  | TYPE
-  | TRUE
-  | STRUCT
-  | STRING of (
+module MenhirBasics = struct
+  
+  exception Error
+  
+  let _eRR =
+    fun _s ->
+      raise Error
+  
+  type token = 
+    | VAR
+    | TYPE
+    | TRUE
+    | STRUCT
+    | STRING of (
 # 12 "mgoparser.mly"
        (string)
-# 11 "mgoparser.ml"
-)
-  | STAR
-  | SLASH
-  | SEMI
-  | RPAR
-  | RETURN
-  | PLUS
-  | PERCENT
-  | PACKAGE
-  | OR
-  | NIL
-  | NEQ
-  | MINUS
-  | LT
-  | LPAR
-  | LE
-  | INT of (
+# 19 "mgoparser.ml"
+  )
+    | STAR
+    | SLASH
+    | SEMI
+    | RPAR
+    | RETURN
+    | PLUS
+    | PERCENT
+    | PACKAGE
+    | OR
+    | NIL
+    | NEQ
+    | MINUS
+    | LT
+    | LPAR
+    | LE
+    | INT of (
 # 10 "mgoparser.mly"
        (int64)
-# 31 "mgoparser.ml"
-)
-  | INCR
-  | IMPORT
-  | IF
-  | IDENT of (
+# 39 "mgoparser.ml"
+  )
+    | INCR
+    | IMPORT
+    | IF
+    | IDENT of (
 # 11 "mgoparser.mly"
        (string)
-# 39 "mgoparser.ml"
-)
-  | GT
-  | GE
-  | FUNC
-  | FOR
-  | FALSE
-  | EQ
-  | EOF
-  | END
-  | ELSE
-  | DOT
-  | DECR
-  | DECL
-  | COMMA
-  | BEGIN
-  | ASSIGN
-  | AND
+# 47 "mgoparser.ml"
+  )
+    | GT
+    | GE
+    | FUNC
+    | FOR
+    | FALSE
+    | EQ
+    | EOF
+    | END
+    | ELSE
+    | DOT
+    | DECR
+    | DECL
+    | COMMA
+    | BEGIN
+    | ASSIGN
+    | AND
+  
+end
+
+include MenhirBasics
 
 # 1 "mgoparser.mly"
   
@@ -63,172 +75,149 @@ type token =
   exception Error
 
 
-# 67 "mgoparser.ml"
+# 79 "mgoparser.ml"
 
-let menhir_begin_marker =
-  0
+type ('s, 'r) _menhir_state = 
+  | MenhirState03 : ('s _menhir_cell0_IDENT, _menhir_box_prog) _menhir_state
+    (** State 03.
+        Stack shape : IDENT.
+        Start symbol: prog. *)
 
-and (xv_varstyp, xv_prog, xv_option_SEMI_, xv_mgotype, xv_loption_fields_, xv_list_decl_, xv_ident, xv_fields, xv_decl) =
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 113 "<standard.mly>"
-  x
-# 76 "mgoparser.ml"
-   : unit) (_startpos_x_ : Lexing.position) (_endpos_x_ : Lexing.position) (_startofs_x_ : int) (_endofs_x_ : int) (_loc_x_ : Lexing.position * Lexing.position) : 'tv_option_SEMI_ ->
-    
-# 114 "<standard.mly>"
-    ( Some x )
-# 81 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) : 'tv_option_SEMI_ ->
-    
-# 111 "<standard.mly>"
-    ( None )
-# 87 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 147 "<standard.mly>"
-  x
-# 92 "mgoparser.ml"
-   : 'tv_fields) (_startpos_x_ : Lexing.position) (_endpos_x_ : Lexing.position) (_startofs_x_ : int) (_endofs_x_ : int) (_loc_x_ : Lexing.position * Lexing.position) : 'tv_loption_fields_ ->
-    
-# 148 "<standard.mly>"
-    ( x )
-# 97 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) : 'tv_loption_fields_ ->
-    
-# 145 "<standard.mly>"
-    ( [] )
-# 103 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 218 "<standard.mly>"
-         xs
-# 108 "mgoparser.ml"
-   : 'tv_list_decl_) (_startpos_xs_ : Lexing.position) (_endpos_xs_ : Lexing.position) (_startofs_xs_ : int) (_endofs_xs_ : int) (_loc_xs_ : Lexing.position * Lexing.position) (
-# 218 "<standard.mly>"
-  x
-# 112 "mgoparser.ml"
-   : 'tv_decl) (_startpos_x_ : Lexing.position) (_endpos_x_ : Lexing.position) (_startofs_x_ : int) (_endofs_x_ : int) (_loc_x_ : Lexing.position * Lexing.position) : 'tv_list_decl_ ->
-    
-# 219 "<standard.mly>"
-    ( x :: xs )
-# 117 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) : 'tv_list_decl_ ->
-    
-# 216 "<standard.mly>"
-    ( [] )
-# 123 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 57 "mgoparser.mly"
-             t
-# 128 "mgoparser.ml"
-   : 'tv_mgotype) (_startpos_t_ : Lexing.position) (_endpos_t_ : Lexing.position) (_startofs_t_ : int) (_endofs_t_ : int) (_loc_t_ : Lexing.position * Lexing.position) (
-# 57 "mgoparser.mly"
-     x
-# 132 "mgoparser.ml"
-   : 'tv_ident) (_startpos_x_ : Lexing.position) (_endpos_x_ : Lexing.position) (_startofs_x_ : int) (_endofs_x_ : int) (_loc_x_ : Lexing.position * Lexing.position) : 'tv_varstyp ->
-    
-# 57 "mgoparser.mly"
-                                     ([(x,t)])
-# 137 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                                                                 _8
-# 142 "mgoparser.ml"
-   : unit) (_startpos__8_ : Lexing.position) (_endpos__8_ : Lexing.position) (_startofs__8_ : int) (_endofs__8_ : int) (_loc__8_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                                                 decls
-# 146 "mgoparser.ml"
-   : 'tv_list_decl_) (_startpos_decls_ : Lexing.position) (_endpos_decls_ : Lexing.position) (_startofs_decls_ : int) (_endofs_decls_ : int) (_loc_decls_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                                           _6
-# 150 "mgoparser.ml"
-   : unit) (_startpos__6_ : Lexing.position) (_endpos__6_ : Lexing.position) (_startofs__6_ : int) (_endofs__6_ : int) (_loc__6_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                                 fmt
-# 154 "mgoparser.ml"
-   : (
+  | MenhirState04 : (('s, _menhir_box_prog) _menhir_cell1_TYPE, _menhir_box_prog) _menhir_state
+    (** State 04.
+        Stack shape : TYPE.
+        Start symbol: prog. *)
+
+  | MenhirState08 : ((('s, _menhir_box_prog) _menhir_cell1_TYPE, _menhir_box_prog) _menhir_cell1_ident, _menhir_box_prog) _menhir_state
+    (** State 08.
+        Stack shape : TYPE ident.
+        Start symbol: prog. *)
+
+  | MenhirState10 : (('s, _menhir_box_prog) _menhir_cell1_varstyp, _menhir_box_prog) _menhir_state
+    (** State 10.
+        Stack shape : varstyp.
+        Start symbol: prog. *)
+
+  | MenhirState24 : (('s _menhir_cell0_IDENT, _menhir_box_prog) _menhir_cell1_IMPORT _menhir_cell0_STRING, _menhir_box_prog) _menhir_state
+    (** State 24.
+        Stack shape : IDENT IMPORT STRING.
+        Start symbol: prog. *)
+
+  | MenhirState27 : (('s, _menhir_box_prog) _menhir_cell1_decl, _menhir_box_prog) _menhir_state
+    (** State 27.
+        Stack shape : decl.
+        Start symbol: prog. *)
+
+
+and ('s, 'r) _menhir_cell1_decl = 
+  | MenhirCell1_decl of 's * ('s, 'r) _menhir_state * (Mgoast.decl)
+
+and ('s, 'r) _menhir_cell1_ident = 
+  | MenhirCell1_ident of 's * ('s, 'r) _menhir_state * (Mgoast.ident)
+
+and ('s, 'r) _menhir_cell1_varstyp = 
+  | MenhirCell1_varstyp of 's * ('s, 'r) _menhir_state * ((Mgoast.ident * Mgoast.typ) list)
+
+and 's _menhir_cell0_IDENT = 
+  | MenhirCell0_IDENT of 's * (
+# 11 "mgoparser.mly"
+       (string)
+# 126 "mgoparser.ml"
+) * Lexing.position * Lexing.position
+
+and ('s, 'r) _menhir_cell1_IMPORT = 
+  | MenhirCell1_IMPORT of 's * ('s, 'r) _menhir_state
+
+and 's _menhir_cell0_STRING = 
+  | MenhirCell0_STRING of 's * (
 # 12 "mgoparser.mly"
        (string)
+# 136 "mgoparser.ml"
+)
+
+and ('s, 'r) _menhir_cell1_TYPE = 
+  | MenhirCell1_TYPE of 's * ('s, 'r) _menhir_state
+
+and _menhir_box_prog = 
+  | MenhirBox_prog of (Mgoast.program) [@@unboxed]
+
+let _menhir_action_01 =
+  fun fl id ->
+    (
+# 42 "mgoparser.mly"
+  ( Struct { sname = id; fields = List.flatten fl; } )
+# 150 "mgoparser.ml"
+     : (Mgoast.decl))
+
+let _menhir_action_02 =
+  fun xt ->
+    (
+# 60 "mgoparser.mly"
+                                ( [xt]      )
 # 158 "mgoparser.ml"
-  )) (_startpos_fmt_ : Lexing.position) (_endpos_fmt_ : Lexing.position) (_startofs_fmt_ : int) (_endofs_fmt_ : int) (_loc_fmt_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                         _4
-# 162 "mgoparser.ml"
-   : unit) (_startpos__4_ : Lexing.position) (_endpos__4_ : Lexing.position) (_startofs__4_ : int) (_endofs__4_ : int) (_loc__4_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-                    _3
+     : ((Mgoast.ident * Mgoast.typ) list list))
+
+let _menhir_action_03 =
+  fun xt xtl ->
+    (
+# 61 "mgoparser.mly"
+                                ( xt :: xtl )
 # 166 "mgoparser.ml"
-   : unit) (_startpos__3_ : Lexing.position) (_endpos__3_ : Lexing.position) (_startofs__3_ : int) (_endofs__3_ : int) (_loc__3_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
-          main
-# 170 "mgoparser.ml"
-   : (
-# 11 "mgoparser.mly"
-       (string)
-# 174 "mgoparser.ml"
-  )) (_startpos_main_ : Lexing.position) (_endpos_main_ : Lexing.position) (_startofs_main_ : int) (_endofs_main_ : int) (_loc_main_ : Lexing.position * Lexing.position) (
-# 32 "mgoparser.mly"
- _1
-# 178 "mgoparser.ml"
-   : unit) (_startpos__1_ : Lexing.position) (_endpos__1_ : Lexing.position) (_startofs__1_ : int) (_endofs__1_ : int) (_loc__1_ : Lexing.position * Lexing.position) : (
-# 22 "mgoparser.mly"
-      (Mgoast.program)
-# 182 "mgoparser.ml"
-  ) ->
+     : ((Mgoast.ident * Mgoast.typ) list list))
+
+let _menhir_action_04 =
+  fun _endpos_id_ _startpos_id_ id ->
+    let _endpos = _endpos_id_ in
+    let _startpos = _startpos_id_ in
     (
-# 33 "mgoparser.mly"
-    ( if main="main" && fmt="fmt" then (true, decls) else raise Error)
-# 187 "mgoparser.ml"
-     : 'tv_prog) in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 30 "mgoparser.mly"
-                                          _5
+# 37 "mgoparser.mly"
+             ( { loc = _startpos, _endpos; id = id } )
+# 176 "mgoparser.ml"
+     : (Mgoast.ident))
+
+let _menhir_action_05 =
+  fun () ->
+    (
+# 216 "<standard.mly>"
+    ( [] )
+# 184 "mgoparser.ml"
+     : (Mgoast.decl list))
+
+let _menhir_action_06 =
+  fun x xs ->
+    (
+# 219 "<standard.mly>"
+    ( x :: xs )
 # 192 "mgoparser.ml"
-   : unit) (_startpos__5_ : Lexing.position) (_endpos__5_ : Lexing.position) (_startofs__5_ : int) (_endofs__5_ : int) (_loc__5_ : Lexing.position * Lexing.position) (
-# 30 "mgoparser.mly"
-                          decls
-# 196 "mgoparser.ml"
-   : 'tv_list_decl_) (_startpos_decls_ : Lexing.position) (_endpos_decls_ : Lexing.position) (_startofs_decls_ : int) (_endofs_decls_ : int) (_loc_decls_ : Lexing.position * Lexing.position) (
-# 30 "mgoparser.mly"
-                    _3
-# 200 "mgoparser.ml"
-   : unit) (_startpos__3_ : Lexing.position) (_endpos__3_ : Lexing.position) (_startofs__3_ : int) (_endofs__3_ : int) (_loc__3_ : Lexing.position * Lexing.position) (
-# 30 "mgoparser.mly"
-          main
-# 204 "mgoparser.ml"
-   : (
-# 11 "mgoparser.mly"
-       (string)
-# 208 "mgoparser.ml"
-  )) (_startpos_main_ : Lexing.position) (_endpos_main_ : Lexing.position) (_startofs_main_ : int) (_endofs_main_ : int) (_loc_main_ : Lexing.position * Lexing.position) (
-# 30 "mgoparser.mly"
- _1
-# 212 "mgoparser.ml"
-   : unit) (_startpos__1_ : Lexing.position) (_endpos__1_ : Lexing.position) (_startofs__1_ : int) (_endofs__1_ : int) (_loc__1_ : Lexing.position * Lexing.position) : (
-# 22 "mgoparser.mly"
-      (Mgoast.program)
-# 216 "mgoparser.ml"
-  ) ->
+     : (Mgoast.decl list))
+
+let _menhir_action_07 =
+  fun () ->
     (
-# 31 "mgoparser.mly"
-    ( if main="main" then (false, decls) else raise Error)
-# 221 "mgoparser.ml"
-     : 'tv_prog) in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 47 "mgoparser.mly"
-    s
-# 226 "mgoparser.ml"
-   : (
-# 11 "mgoparser.mly"
-       (string)
-# 230 "mgoparser.ml"
-  )) (_startpos_s_ : Lexing.position) (_endpos_s_ : Lexing.position) (_startofs_s_ : int) (_endofs_s_ : int) (_loc_s_ : Lexing.position * Lexing.position) : 'tv_mgotype ->
-    
+# 145 "<standard.mly>"
+    ( [] )
+# 200 "mgoparser.ml"
+     : ((Mgoast.ident * Mgoast.typ) list list))
+
+let _menhir_action_08 =
+  fun x ->
+    (
+# 148 "<standard.mly>"
+    ( x )
+# 208 "mgoparser.ml"
+     : ((Mgoast.ident * Mgoast.typ) list list))
+
+let _menhir_action_09 =
+  fun s ->
+    (
+# 46 "mgoparser.mly"
+                  ( TStruct(s) )
+# 216 "mgoparser.ml"
+     : (Mgoast.typ))
+
+let _menhir_action_10 =
+  fun s ->
+    (
 # 47 "mgoparser.mly"
                   (
                     match s with
@@ -237,107 +226,392 @@ and (xv_varstyp, xv_prog, xv_option_SEMI_, xv_mgotype, xv_loption_fields_, xv_li
                     | "string" -> TString
                     | _        -> TStruct s
                     )
-# 241 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 46 "mgoparser.mly"
-         s
-# 246 "mgoparser.ml"
-   : (
-# 11 "mgoparser.mly"
-       (string)
-# 250 "mgoparser.ml"
-  )) (_startpos_s_ : Lexing.position) (_endpos_s_ : Lexing.position) (_startofs_s_ : int) (_endofs_s_ : int) (_loc_s_ : Lexing.position * Lexing.position) (
-# 46 "mgoparser.mly"
-   _1
-# 254 "mgoparser.ml"
-   : unit) (_startpos__1_ : Lexing.position) (_endpos__1_ : Lexing.position) (_startofs__1_ : int) (_endofs__1_ : int) (_loc__1_ : Lexing.position * Lexing.position) : 'tv_mgotype ->
-    
-# 46 "mgoparser.mly"
-                  ( TStruct(s) )
-# 259 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 37 "mgoparser.mly"
-  id
-# 264 "mgoparser.ml"
-   : (
-# 11 "mgoparser.mly"
-       (string)
-# 268 "mgoparser.ml"
-  )) (_startpos_id_ : Lexing.position) (_endpos_id_ : Lexing.position) (_startofs_id_ : int) (_endofs_id_ : int) (_loc_id_ : Lexing.position * Lexing.position) : 'tv_ident ->
-    
-# 37 "mgoparser.mly"
-             ( { loc = _startpos, _endpos; id = id } )
-# 273 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 61 "mgoparser.mly"
-                  xtl
-# 278 "mgoparser.ml"
-   : 'tv_fields) (_startpos_xtl_ : Lexing.position) (_endpos_xtl_ : Lexing.position) (_startofs_xtl_ : int) (_endofs_xtl_ : int) (_loc_xtl_ : Lexing.position * Lexing.position) (
-# 61 "mgoparser.mly"
-            _2
-# 282 "mgoparser.ml"
-   : unit) (_startpos__2_ : Lexing.position) (_endpos__2_ : Lexing.position) (_startofs__2_ : int) (_endofs__2_ : int) (_loc__2_ : Lexing.position * Lexing.position) (
-# 61 "mgoparser.mly"
-  xt
-# 286 "mgoparser.ml"
-   : 'tv_varstyp) (_startpos_xt_ : Lexing.position) (_endpos_xt_ : Lexing.position) (_startofs_xt_ : int) (_endofs_xt_ : int) (_loc_xt_ : Lexing.position * Lexing.position) : 'tv_fields ->
-    
-# 61 "mgoparser.mly"
-                                ( xt :: xtl )
-# 291 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 60 "mgoparser.mly"
-            _2
-# 296 "mgoparser.ml"
-   : 'tv_option_SEMI_) (_startpos__2_ : Lexing.position) (_endpos__2_ : Lexing.position) (_startofs__2_ : int) (_endofs__2_ : int) (_loc__2_ : Lexing.position * Lexing.position) (
-# 60 "mgoparser.mly"
-  xt
-# 300 "mgoparser.ml"
-   : 'tv_varstyp) (_startpos_xt_ : Lexing.position) (_endpos_xt_ : Lexing.position) (_startofs_xt_ : int) (_endofs_xt_ : int) (_loc_xt_ : Lexing.position * Lexing.position) : 'tv_fields ->
-    
-# 60 "mgoparser.mly"
-                                ( [xt]      )
-# 305 "mgoparser.ml"
-     in
-  let _ = fun (_startpos : Lexing.position) (_endpos : Lexing.position) (_endpos__0_ : Lexing.position) (_symbolstartpos : Lexing.position) (_startofs : int) (_endofs : int) (_endofs__0_ : int) (_symbolstartofs : int) (_sloc : Lexing.position * Lexing.position) (_loc : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-                                                  _7
-# 310 "mgoparser.ml"
-   : unit) (_startpos__7_ : Lexing.position) (_endpos__7_ : Lexing.position) (_startofs__7_ : int) (_endofs__7_ : int) (_loc__7_ : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-                                              _6
-# 314 "mgoparser.ml"
-   : unit) (_startpos__6_ : Lexing.position) (_endpos__6_ : Lexing.position) (_startofs__6_ : int) (_endofs__6_ : int) (_loc__6_ : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-                            fl
-# 318 "mgoparser.ml"
-   : 'tv_loption_fields_) (_startpos_fl_ : Lexing.position) (_endpos_fl_ : Lexing.position) (_startofs_fl_ : int) (_endofs_fl_ : int) (_loc_fl_ : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-                     _4
-# 322 "mgoparser.ml"
-   : unit) (_startpos__4_ : Lexing.position) (_endpos__4_ : Lexing.position) (_startofs__4_ : int) (_endofs__4_ : int) (_loc__4_ : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-              _3
-# 326 "mgoparser.ml"
-   : unit) (_startpos__3_ : Lexing.position) (_endpos__3_ : Lexing.position) (_startofs__3_ : int) (_endofs__3_ : int) (_loc__3_ : Lexing.position * Lexing.position) (
-# 41 "mgoparser.mly"
-      id
-# 330 "mgoparser.ml"
-   : 'tv_ident) (_startpos_id_ : Lexing.position) (_endpos_id_ : Lexing.position) (_startofs_id_ : int) (_endofs_id_ : int) (_loc_id_ : Lexing.position * Lexing.position) (
-# 40 "mgoparser.mly"
-     _1
-# 335 "mgoparser.ml"
-   : unit) (_startpos__1_ : Lexing.position) (_endpos__1_ : Lexing.position) (_startofs__1_ : int) (_endofs__1_ : int) (_loc__1_ : Lexing.position * Lexing.position) : 'tv_decl ->
-    
-# 42 "mgoparser.mly"
-  ( Struct { sname = id; fields = List.flatten fl; } )
-# 340 "mgoparser.ml"
-     in
-  ((let rec diverge() = diverge() in diverge()) : 'tv_varstyp * 'tv_prog * 'tv_option_SEMI_ * 'tv_mgotype * 'tv_loption_fields_ * 'tv_list_decl_ * 'tv_ident * 'tv_fields * 'tv_decl)
+# 230 "mgoparser.ml"
+     : (Mgoast.typ))
 
-and menhir_end_marker =
-  0
+let _menhir_action_11 =
+  fun () ->
+    (
+# 111 "<standard.mly>"
+    ( None )
+# 238 "mgoparser.ml"
+     : (unit option))
+
+let _menhir_action_12 =
+  fun x ->
+    (
+# 114 "<standard.mly>"
+    ( Some x )
+# 246 "mgoparser.ml"
+     : (unit option))
+
+let _menhir_action_13 =
+  fun decls main ->
+    (
+# 31 "mgoparser.mly"
+    ( if main="main" then (false, decls) else raise Error)
+# 254 "mgoparser.ml"
+     : (Mgoast.program))
+
+let _menhir_action_14 =
+  fun decls fmt main ->
+    (
+# 33 "mgoparser.mly"
+    ( if main="main" && fmt="fmt" then (true, decls) else raise Error)
+# 262 "mgoparser.ml"
+     : (Mgoast.program))
+
+let _menhir_action_15 =
+  fun t x ->
+    (
+# 57 "mgoparser.mly"
+                                     ([(x,t)])
+# 270 "mgoparser.ml"
+     : ((Mgoast.ident * Mgoast.typ) list))
+
+let _menhir_print_token : token -> string =
+  fun _tok ->
+    match _tok with
+    | AND ->
+        "AND"
+    | ASSIGN ->
+        "ASSIGN"
+    | BEGIN ->
+        "BEGIN"
+    | COMMA ->
+        "COMMA"
+    | DECL ->
+        "DECL"
+    | DECR ->
+        "DECR"
+    | DOT ->
+        "DOT"
+    | ELSE ->
+        "ELSE"
+    | END ->
+        "END"
+    | EOF ->
+        "EOF"
+    | EQ ->
+        "EQ"
+    | FALSE ->
+        "FALSE"
+    | FOR ->
+        "FOR"
+    | FUNC ->
+        "FUNC"
+    | GE ->
+        "GE"
+    | GT ->
+        "GT"
+    | IDENT _ ->
+        "IDENT"
+    | IF ->
+        "IF"
+    | IMPORT ->
+        "IMPORT"
+    | INCR ->
+        "INCR"
+    | INT _ ->
+        "INT"
+    | LE ->
+        "LE"
+    | LPAR ->
+        "LPAR"
+    | LT ->
+        "LT"
+    | MINUS ->
+        "MINUS"
+    | NEQ ->
+        "NEQ"
+    | NIL ->
+        "NIL"
+    | OR ->
+        "OR"
+    | PACKAGE ->
+        "PACKAGE"
+    | PERCENT ->
+        "PERCENT"
+    | PLUS ->
+        "PLUS"
+    | RETURN ->
+        "RETURN"
+    | RPAR ->
+        "RPAR"
+    | SEMI ->
+        "SEMI"
+    | SLASH ->
+        "SLASH"
+    | STAR ->
+        "STAR"
+    | STRING _ ->
+        "STRING"
+    | STRUCT ->
+        "STRUCT"
+    | TRUE ->
+        "TRUE"
+    | TYPE ->
+        "TYPE"
+    | VAR ->
+        "VAR"
+
+let _menhir_fail : unit -> 'a =
+  fun () ->
+    Printf.eprintf "Internal failure -- please contact the parser generator's developers.\n%!";
+    assert false
+
+include struct
+  
+  [@@@ocaml.warning "-4-37"]
+  
+  let _menhir_goto_prog : type  ttv_stack. ttv_stack -> _ -> _menhir_box_prog =
+    fun _menhir_stack _v ->
+      MenhirBox_prog _v
+  
+  let _menhir_run_29 : type  ttv_stack. ttv_stack _menhir_cell0_IDENT -> _ -> _menhir_box_prog =
+    fun _menhir_stack _v ->
+      let MenhirCell0_IDENT (_menhir_stack, main, _, _) = _menhir_stack in
+      let decls = _v in
+      let _v = _menhir_action_13 decls main in
+      _menhir_goto_prog _menhir_stack _v
+  
+  let _menhir_run_25 : type  ttv_stack. (ttv_stack _menhir_cell0_IDENT, _menhir_box_prog) _menhir_cell1_IMPORT _menhir_cell0_STRING -> _ -> _menhir_box_prog =
+    fun _menhir_stack _v ->
+      let MenhirCell0_STRING (_menhir_stack, fmt) = _menhir_stack in
+      let MenhirCell1_IMPORT (_menhir_stack, _) = _menhir_stack in
+      let MenhirCell0_IDENT (_menhir_stack, main, _, _) = _menhir_stack in
+      let decls = _v in
+      let _v = _menhir_action_14 decls fmt main in
+      _menhir_goto_prog _menhir_stack _v
+  
+  let rec _menhir_run_28 : type  ttv_stack. (ttv_stack, _menhir_box_prog) _menhir_cell1_decl -> _ -> _menhir_box_prog =
+    fun _menhir_stack _v ->
+      let MenhirCell1_decl (_menhir_stack, _menhir_s, x) = _menhir_stack in
+      let xs = _v in
+      let _v = _menhir_action_06 x xs in
+      _menhir_goto_list_decl_ _menhir_stack _v _menhir_s
+  
+  and _menhir_goto_list_decl_ : type  ttv_stack. ttv_stack -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _menhir_box_prog =
+    fun _menhir_stack _v _menhir_s ->
+      match _menhir_s with
+      | MenhirState03 ->
+          _menhir_run_29 _menhir_stack _v
+      | MenhirState27 ->
+          _menhir_run_28 _menhir_stack _v
+      | MenhirState24 ->
+          _menhir_run_25 _menhir_stack _v
+      | _ ->
+          _menhir_fail ()
+  
+  let rec _menhir_run_04 : type  ttv_stack. ttv_stack -> _ -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _menhir_s ->
+      let _menhir_stack = MenhirCell1_TYPE (_menhir_stack, _menhir_s) in
+      let _menhir_s = MenhirState04 in
+      let _tok = _menhir_lexer _menhir_lexbuf in
+      match (_tok : MenhirBasics.token) with
+      | IDENT _v ->
+          _menhir_run_05 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s
+      | _ ->
+          _eRR ()
+  
+  and _menhir_run_05 : type  ttv_stack. ttv_stack -> _ -> _ -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s ->
+      let _startpos = _menhir_lexbuf.Lexing.lex_start_p in
+      let _endpos = _menhir_lexbuf.Lexing.lex_curr_p in
+      let _tok = _menhir_lexer _menhir_lexbuf in
+      let (_endpos_id_, _startpos_id_, id) = (_endpos, _startpos, _v) in
+      let _v = _menhir_action_04 _endpos_id_ _startpos_id_ id in
+      _menhir_goto_ident _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok
+  
+  and _menhir_goto_ident : type  ttv_stack. ttv_stack -> _ -> _ -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok ->
+      match _menhir_s with
+      | MenhirState08 ->
+          _menhir_run_11 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok
+      | MenhirState10 ->
+          _menhir_run_11 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok
+      | MenhirState04 ->
+          _menhir_run_06 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok
+      | _ ->
+          _menhir_fail ()
+  
+  and _menhir_run_11 : type  ttv_stack. ttv_stack -> _ -> _ -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok ->
+      let _menhir_stack = MenhirCell1_ident (_menhir_stack, _menhir_s, _v) in
+      match (_tok : MenhirBasics.token) with
+      | STAR ->
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          (match (_tok : MenhirBasics.token) with
+          | IDENT _v_0 ->
+              let _tok = _menhir_lexer _menhir_lexbuf in
+              let s = _v_0 in
+              let _v = _menhir_action_09 s in
+              _menhir_goto_mgotype _menhir_stack _menhir_lexbuf _menhir_lexer _v _tok
+          | _ ->
+              _eRR ())
+      | IDENT _v_2 ->
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          let s = _v_2 in
+          let _v = _menhir_action_10 s in
+          _menhir_goto_mgotype _menhir_stack _menhir_lexbuf _menhir_lexer _v _tok
+      | _ ->
+          _eRR ()
+  
+  and _menhir_goto_mgotype : type  ttv_stack. (ttv_stack, _menhir_box_prog) _menhir_cell1_ident -> _ -> _ -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _tok ->
+      let MenhirCell1_ident (_menhir_stack, _menhir_s, x) = _menhir_stack in
+      let t = _v in
+      let _v = _menhir_action_15 t x in
+      let _menhir_stack = MenhirCell1_varstyp (_menhir_stack, _menhir_s, _v) in
+      match (_tok : MenhirBasics.token) with
+      | SEMI ->
+          let _menhir_s = MenhirState10 in
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          (match (_tok : MenhirBasics.token) with
+          | IDENT _v ->
+              _menhir_run_05 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s
+          | END ->
+              let x = () in
+              let _ = _menhir_action_12 x in
+              _menhir_goto_option_SEMI_ _menhir_stack _menhir_lexbuf _menhir_lexer
+          | _ ->
+              _eRR ())
+      | END ->
+          let _ = _menhir_action_11 () in
+          _menhir_goto_option_SEMI_ _menhir_stack _menhir_lexbuf _menhir_lexer
+      | _ ->
+          _eRR ()
+  
+  and _menhir_goto_option_SEMI_ : type  ttv_stack. (ttv_stack, _menhir_box_prog) _menhir_cell1_varstyp -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer ->
+      let MenhirCell1_varstyp (_menhir_stack, _menhir_s, xt) = _menhir_stack in
+      let _v = _menhir_action_02 xt in
+      _menhir_goto_fields _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s
+  
+  and _menhir_goto_fields : type  ttv_stack. ttv_stack -> _ -> _ -> _ -> (ttv_stack, _menhir_box_prog) _menhir_state -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s ->
+      match _menhir_s with
+      | MenhirState08 ->
+          _menhir_run_21 _menhir_stack _menhir_lexbuf _menhir_lexer _v
+      | MenhirState10 ->
+          _menhir_run_16 _menhir_stack _menhir_lexbuf _menhir_lexer _v
+      | _ ->
+          _menhir_fail ()
+  
+  and _menhir_run_21 : type  ttv_stack. ((ttv_stack, _menhir_box_prog) _menhir_cell1_TYPE, _menhir_box_prog) _menhir_cell1_ident -> _ -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v ->
+      let x = _v in
+      let _v = _menhir_action_08 x in
+      _menhir_goto_loption_fields_ _menhir_stack _menhir_lexbuf _menhir_lexer _v
+  
+  and _menhir_goto_loption_fields_ : type  ttv_stack. ((ttv_stack, _menhir_box_prog) _menhir_cell1_TYPE, _menhir_box_prog) _menhir_cell1_ident -> _ -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v ->
+      let _tok = _menhir_lexer _menhir_lexbuf in
+      match (_tok : MenhirBasics.token) with
+      | SEMI ->
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          let MenhirCell1_ident (_menhir_stack, _, id) = _menhir_stack in
+          let MenhirCell1_TYPE (_menhir_stack, _menhir_s) = _menhir_stack in
+          let fl = _v in
+          let _v = _menhir_action_01 fl id in
+          let _menhir_stack = MenhirCell1_decl (_menhir_stack, _menhir_s, _v) in
+          (match (_tok : MenhirBasics.token) with
+          | TYPE ->
+              _menhir_run_04 _menhir_stack _menhir_lexbuf _menhir_lexer MenhirState27
+          | EOF ->
+              let _v_0 = _menhir_action_05 () in
+              _menhir_run_28 _menhir_stack _v_0
+          | _ ->
+              _eRR ())
+      | _ ->
+          _eRR ()
+  
+  and _menhir_run_16 : type  ttv_stack. (ttv_stack, _menhir_box_prog) _menhir_cell1_varstyp -> _ -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v ->
+      let MenhirCell1_varstyp (_menhir_stack, _menhir_s, xt) = _menhir_stack in
+      let xtl = _v in
+      let _v = _menhir_action_03 xt xtl in
+      _menhir_goto_fields _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s
+  
+  and _menhir_run_06 : type  ttv_stack. ((ttv_stack, _menhir_box_prog) _menhir_cell1_TYPE as 'stack) -> _ -> _ -> _ -> ('stack, _menhir_box_prog) _menhir_state -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s _tok ->
+      let _menhir_stack = MenhirCell1_ident (_menhir_stack, _menhir_s, _v) in
+      match (_tok : MenhirBasics.token) with
+      | STRUCT ->
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          (match (_tok : MenhirBasics.token) with
+          | BEGIN ->
+              let _menhir_s = MenhirState08 in
+              let _tok = _menhir_lexer _menhir_lexbuf in
+              (match (_tok : MenhirBasics.token) with
+              | IDENT _v ->
+                  _menhir_run_05 _menhir_stack _menhir_lexbuf _menhir_lexer _v _menhir_s
+              | END ->
+                  let _v = _menhir_action_07 () in
+                  _menhir_goto_loption_fields_ _menhir_stack _menhir_lexbuf _menhir_lexer _v
+              | _ ->
+                  _eRR ())
+          | _ ->
+              _eRR ())
+      | _ ->
+          _eRR ()
+  
+  let _menhir_run_00 : type  ttv_stack. ttv_stack -> _ -> _ -> _menhir_box_prog =
+    fun _menhir_stack _menhir_lexbuf _menhir_lexer ->
+      let _tok = _menhir_lexer _menhir_lexbuf in
+      match (_tok : MenhirBasics.token) with
+      | PACKAGE ->
+          let _tok = _menhir_lexer _menhir_lexbuf in
+          (match (_tok : MenhirBasics.token) with
+          | IDENT _v ->
+              let _startpos = _menhir_lexbuf.Lexing.lex_start_p in
+              let _endpos = _menhir_lexbuf.Lexing.lex_curr_p in
+              let _menhir_stack = MenhirCell0_IDENT (_menhir_stack, _v, _startpos, _endpos) in
+              let _tok = _menhir_lexer _menhir_lexbuf in
+              (match (_tok : MenhirBasics.token) with
+              | SEMI ->
+                  let _tok = _menhir_lexer _menhir_lexbuf in
+                  (match (_tok : MenhirBasics.token) with
+                  | TYPE ->
+                      _menhir_run_04 _menhir_stack _menhir_lexbuf _menhir_lexer MenhirState03
+                  | IMPORT ->
+                      let _menhir_stack = MenhirCell1_IMPORT (_menhir_stack, MenhirState03) in
+                      let _tok = _menhir_lexer _menhir_lexbuf in
+                      (match (_tok : MenhirBasics.token) with
+                      | STRING _v_0 ->
+                          let _menhir_stack = MenhirCell0_STRING (_menhir_stack, _v_0) in
+                          let _tok = _menhir_lexer _menhir_lexbuf in
+                          (match (_tok : MenhirBasics.token) with
+                          | SEMI ->
+                              let _tok = _menhir_lexer _menhir_lexbuf in
+                              (match (_tok : MenhirBasics.token) with
+                              | TYPE ->
+                                  _menhir_run_04 _menhir_stack _menhir_lexbuf _menhir_lexer MenhirState24
+                              | EOF ->
+                                  let _v_1 = _menhir_action_05 () in
+                                  _menhir_run_25 _menhir_stack _v_1
+                              | _ ->
+                                  _eRR ())
+                          | _ ->
+                              _eRR ())
+                      | _ ->
+                          _eRR ())
+                  | EOF ->
+                      let _v_2 = _menhir_action_05 () in
+                      _menhir_run_29 _menhir_stack _v_2
+                  | _ ->
+                      _eRR ())
+              | _ ->
+                  _eRR ())
+          | _ ->
+              _eRR ())
+      | _ ->
+          _eRR ()
+  
+end
+
+let prog =
+  fun _menhir_lexer _menhir_lexbuf ->
+    let _menhir_stack = () in
+    let MenhirBox_prog v = _menhir_run_00 _menhir_stack _menhir_lexbuf _menhir_lexer in
+    v

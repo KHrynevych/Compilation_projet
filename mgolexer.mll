@@ -44,6 +44,7 @@ rule token = parse
 
   | intlit as n  { INT(Int64.int64_of_lexeme n) }
   | ident as id  { keyword_or_ident id }
+  | '"'          { string_lit (Buffer.create 16) lexbuf }
 
   | ";"  { SEMI } | "("  { LPAR } | ")"  { RPAR }
   | "{"  { BEGIN } | "}"  { END } | "*"  { STAR }

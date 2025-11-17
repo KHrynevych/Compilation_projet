@@ -18,7 +18,7 @@
       ] ;
     fun s -> match Hashtbl.find_opt h s with Some k -> k
                                             | None -> IDENT s
-    let max_i64 = Int64.max_int64
+    let max_i64 = Int64.max_int
 
     let int64_of_lexeme s =
       try
@@ -42,7 +42,7 @@ rule token = parse
   | "//" [^ '\n']*  { token lexbuf }
   | "/*"            { comment lexbuf; token lexbuf }
 
-  | intlit as n  { INT(Int64.int64_of_lexeme n) }
+  | intlit as n  { INT(int64_of_lexeme n) }
   | ident as id  { keyword_or_ident id }
   | '"'          { string_lit (Buffer.create 16) lexbuf }
 

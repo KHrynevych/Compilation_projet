@@ -8,6 +8,9 @@ $(EXE): *.ml*
 test: $(EXE) tests/test.go
 	-./$(EXE) --parse-only tests/test.go
 
+test2: $(EXE) tests/min.go
+	-./$(EXE) --parse-only tests/min.go
+
 .PHONY: clean
 clean:
 	dune clean

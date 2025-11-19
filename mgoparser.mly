@@ -28,6 +28,7 @@
 
 %%
 
+(* Règles *)
 prog:
 | PACKAGE main=IDENT SEMI decls=list(decl) EOF
     { if main="main" then (false, decls) else raise Error}
@@ -44,6 +45,7 @@ decl:
   { Struct { sname = id; fields = List.flatten fl; } }
 ;
 
+(* mgotype = type *)
 mgotype:
   | STAR s=IDENT  { TStruct(s) }
   | s=IDENT       {
@@ -55,9 +57,15 @@ mgotype:
                     }
 ;
 
+(* varstyp = vars *)
 varstyp:
-  |  x=ident t=mgotype               {[(x,t)]}
+  |  x_list=ident_list t=mgotype   { List.map (fun x -> (x,t)) x_list}
 
+ident_list:
+| x=ident {[x]}
+| x=ident COMMA x1=ident_list {x :: x1}
+
+(* sert à définir les structures uniquement *)
 fields:
 | xt=varstyp SEMI?              { [xt]      }
 | xt=varstyp SEMI xtl = fields  { xt :: xtl }

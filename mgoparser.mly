@@ -53,7 +53,8 @@ type_retour:
 ;
 
 ;
-(* mgotype = type *)
+(* mgotype = type
+il faut modifier dans le cas où c'est une structure et vérifier qu'il y a bien une étoile au début *)
 mgotype:
   | STAR s=IDENT  { TStruct(s) }
   | s=IDENT       {
@@ -106,8 +107,16 @@ instr:
 ;
 
 instr_simple:
-| ex=expr {Expr(ex)}
+| ex=expr         {Expr(ex)}
+| ex=expr PPLUS   {Inc(ex)}
+| ex=expr MMINUS  {Dec(ex)}
+| ex1=expr_list ASSIGN ex2=expr_list          {Set( (ex1, ex2) )}
+| id_list=ident_list DECL ex_list=expr_list   
+{ Vars( (id_list, None, List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex_list ))}
+(* pas sûr pour l'option de déclaration, il faut peut être ajouter le type
+ d'une façon ou d'une autre voir faire complêtement autrement? *)
 ;
+
 
 expr:
 | e = expr_desc {  { eloc = $startpos, $endpos; edesc = e } }
@@ -119,7 +128,8 @@ expr_desc:
   {if fmt="fmt" && print="Print" then Print(ex_li) else raise Error}
 ;
 
+(* liste d'expressions non nulle séparées par des virgules *)
 expr_list:
 | e=expr {[e]}
-| e=expr e1=expr_list {e::e1}
+| e=expr COMMA e1=expr_list {e::e1}
 ;

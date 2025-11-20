@@ -18,7 +18,6 @@
 %token AND OR ASSIGN DECL INCR DECR
 %token POINT
 %token PPLUS MMINUS
-%token PRINT
 %token EOF
 
 %start prog
@@ -116,4 +115,11 @@ expr:
 
 expr_desc:
 | n=INT { Int(n) }
+| fmt=IDENT POINT print=IDENT LPAR ex_li=expr_list RPAR
+  {if fmt="fmt" && print="Print" then Print(ex_li) else raise Error}
+;
+
+expr_list:
+| e=expr {[e]}
+| e=expr e1=expr_list {e::e1}
 ;

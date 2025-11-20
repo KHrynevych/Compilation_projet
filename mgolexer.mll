@@ -14,7 +14,7 @@
         "for",        FOR;     "func",       FUNC;
         "if",         IF;      "nil",        NIL;
         "return",     RETURN;  "true",       TRUE;
-        "var",        VAR;     "fmt.print",   PRINT
+        "var",        VAR;
       ] ;
     fun s -> match Hashtbl.find_opt h s with Some k -> k
                                             | None -> IDENT s

@@ -18,6 +18,7 @@
 %token AND OR ASSIGN DECL INCR DECR
 %token POINT
 %token PPLUS MMINUS
+%token PRINT
 %token EOF
 
 %start prog
@@ -41,10 +42,18 @@ ident:
 ;
 
 decl:
- TYPE id=ident STRUCT BEGIN fl=loption(fields) END SEMI
+| TYPE id=ident STRUCT BEGIN fl=loption(fields) END SEMI
   { Struct { sname = id; fields = List.flatten fl; } }
+| FUNC id=ident LPAR par=loption(params) RPAR ret=loption(type_retour) bl=bloc SEMI
+  { Fun { fname = id; params = List.flatten par; return= ret; body = bl; } }
 ;
 
+type_retour:
+| mtype=mgotype {[mtype]}
+| LPAR types=mgotype_list RPAR {types}
+;
+
+;
 (* mgotype = type *)
 mgotype:
   | STAR s=IDENT  { TStruct(s) }
@@ -57,18 +66,49 @@ mgotype:
                     }
 ;
 
-(* varstyp = vars *)
+mgotype_list:
+| mtype=mgotype COMMA? {[mtype]}
+| type1=mgotype COMMA types=mgotype_list {type1::types}
+;
+
+
+(* varstyp + ident_list = vars *)
 varstyp:
   |  x_list=ident_list t=mgotype   { List.map (fun x -> (x,t)) x_list}
+;
 
 ident_list:
 | x=ident {[x]}
 | x=ident COMMA x1=ident_list {x :: x1}
+;
 
-(* sert à définir les structures uniquement *)
 fields:
 | xt=varstyp SEMI?              { [xt]      }
 | xt=varstyp SEMI xtl = fields  { xt :: xtl }
+;
+
+params:
+| xt=varstyp COMMA?             { [xt]      }
+| xt=varstyp COMMA xtl = params { xt :: xtl }
+;
+
+bloc:
+BEGIN ins_list=loption(instr_list) END {ins_list}
+;
+
+instr_list:
+| ins = instr SEMI? {[ins]}
+| ins1=instr SEMI ins_list=instr_list {ins1::ins_list}
+;
+
+(* il faut compléter les cas pour instr, instr_simple, expr, expr_desc, etc *)
+instr:
+| ins_sim=instr_simple { { iloc= $startpos, $endpos; idesc = ins_sim } }
+;
+
+instr_simple:
+| ex=expr {Expr(ex)}
+;
 
 expr:
 | e = expr_desc {  { eloc = $startpos, $endpos; edesc = e } }

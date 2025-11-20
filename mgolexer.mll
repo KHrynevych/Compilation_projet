@@ -6,7 +6,7 @@
   exception Error of string
 
   let keyword_or_ident =
-    let h = Hashtbl.create 23 in
+    let h = Hashtbl.create 24 in
     List.iter (fun (s, k) -> Hashtbl.add h s k)
       [ "package",    PACKAGE; "import",     IMPORT;
         "type",       TYPE;    "struct",     STRUCT;    
@@ -14,7 +14,7 @@
         "for",        FOR;     "func",       FUNC;
         "if",         IF;      "nil",        NIL;
         "return",     RETURN;  "true",       TRUE;
-        "var",        VAR
+        "var",        VAR;     "fmt.print",   PRINT
       ] ;
     fun s -> match Hashtbl.find_opt h s with Some k -> k
                                             | None -> IDENT s

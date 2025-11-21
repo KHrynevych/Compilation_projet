@@ -12,10 +12,10 @@
 %token <string> STRING
 %token PACKAGE IMPORT TYPE STRUCT FUNC RETURN IF ELSE FOR VAR TRUE FALSE NIL
 
-%token LPAR RPAR BEGIN END COMMA SEMI DOT
+%token LPAR RPAR BEGIN END COMMA SEMI
 %token PLUS MINUS STAR SLASH PERCENT
 %token EQ NEQ LT LE GT GE NOT
-%token AND OR ASSIGN DECL INCR DECR
+%token AND OR ASSIGN DECL
 %token POINT
 %token PPLUS MMINUS
 %token EOF
@@ -23,8 +23,12 @@
 %start prog
 %type <Mgoast.program> prog
 
+%left OR
+%left AND
+%left EQ NEQ LT LE GT GE
 %left PLUS MINUS
 %left STAR SLASH PERCENT
+%left POINT
 
 %%
 
@@ -109,20 +113,29 @@ instr:
 instr_desc:
 | ins_sim=instr_simple { ins_sim }
 | bl=bloc {Block(bl)}
+(*| iif=instr_if {iif}*)
+| VAR idl=ident_list typ=option(mgotype) {Vars(idl, typ, [])}
+| VAR idl=ident_list typ=option(mgotype) ASSIGN exl=expr_list 
+{Vars(idl, typ, List.map (fun ex -> {iloc= $startpos, $endpos; idesc = Expr(ex)}) exl)}
+| RETURN exl=loption(expr_list) {Return(exl)}
+| FOR bl=bloc {For({eloc= $startpos, $endpos; edesc=Bool(true)}, bl)}
 ;
 
 instr_simple:
 | ex=expr         {Expr(ex)}
 | ex=expr PPLUS   {Inc(ex)}
 | ex=expr MMINUS  {Dec(ex)}
-| ex1=expr_list ASSIGN ex2=expr_list          {Set( (ex1, ex2) )}
+| ex1=expr_list ASSIGN ex2=expr_list          {Set( ex1, ex2 )}
 | id_list=ident_list DECL ex_list=expr_list   
 { Vars( (id_list, None, List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex_list ))}
 (* pas sûr pour l'option de déclaration, il faut peut être ajouter le type
  d'une façon ou d'une autre voir faire complêtement autrement? *)
 ;
-
-
+(*
+instr_if:
+| IF ex=expr
+;
+*)
 expr:
 | e = expr_desc {  { eloc = $startpos, $endpos; edesc = e } }
 ;
@@ -135,9 +148,26 @@ expr_desc:
 | NIL {Nil}
 | LPAR ex=expr RPAR {ex.edesc} (* pas sûr de celui là, à tester.. *)
 | id=ident {Var(id)}
-| ex=expr POINT id=ident {Dot((ex, id))}
+| ex=expr POINT id=ident {Dot(ex, id)}
+| id=ident LPAR exl=loption(expr_list) RPAR {Call(id, exl)}
 | fmt=IDENT POINT print=IDENT LPAR ex_li=expr_list RPAR
   {if fmt="fmt" && print="Print" then Print(ex_li) else raise Error}
+| NOT ex=expr {Unop(Not, ex)}
+| MINUS ex=expr {Unop(Opp, ex)}
+
+| ex1=expr PLUS ex2=expr {Binop(Add, ex1, ex2)}
+| ex1=expr MINUS ex2=expr {Binop(Sub, ex1, ex2)}
+| ex1=expr STAR ex2=expr {Binop(Mul, ex1, ex2)}
+| ex1=expr SLASH ex2=expr {Binop(Div, ex1, ex2)}
+| ex1=expr PERCENT ex2=expr {Binop(Rem, ex1, ex2)}
+| ex1=expr LT ex2=expr {Binop(Lt, ex1, ex2)}
+| ex1=expr LE ex2=expr {Binop(Le, ex1, ex2)}
+| ex1=expr GT ex2=expr {Binop(Gt, ex1, ex2)}
+| ex1=expr GE ex2=expr {Binop(Ge, ex1, ex2)}
+| ex1=expr EQ ex2=expr {Binop(Eq, ex1, ex2)}
+| ex1=expr NEQ ex2=expr {Binop(Neq, ex1, ex2)}
+| ex1=expr AND ex2=expr {Binop(And, ex1, ex2)}
+| ex1=expr OR ex2=expr {Binop(Or, ex1, ex2)}
 ;
 
 (* liste d'expressions non nulle séparées par des virgules *)

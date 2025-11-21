@@ -11,6 +11,9 @@ test: $(EXE) tests/test.go
 test2: $(EXE) tests/min.go
 	-./$(EXE) --parse-only tests/min.go
 
+test3: $(EXE) tests/arith.go
+	-./$(EXE) --parse-only tests/arith.go
+
 .PHONY: clean
 clean:
 	dune clean

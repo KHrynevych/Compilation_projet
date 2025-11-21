@@ -103,7 +103,12 @@ instr_list:
 
 (* il faut compléter les cas pour instr, instr_simple, expr, expr_desc, etc *)
 instr:
-| ins_sim=instr_simple { { iloc= $startpos, $endpos; idesc = ins_sim } }
+| i=instr_desc { {iloc= $startpos, $endpos; idesc = i} }
+;
+
+instr_desc:
+| ins_sim=instr_simple { ins_sim }
+| bl=bloc {Block(bl)}
 ;
 
 instr_simple:
@@ -124,6 +129,13 @@ expr:
 
 expr_desc:
 | n=INT { Int(n) }
+| ch=STRING { String(ch) }
+| TRUE {Bool(true)}
+| FALSE {Bool(false)}
+| NIL {Nil}
+| LPAR ex=expr RPAR {ex.edesc} (* pas sûr de celui là, à tester.. *)
+| id=ident {Var(id)}
+| ex=expr POINT id=ident {Dot((ex, id))}
 | fmt=IDENT POINT print=IDENT LPAR ex_li=expr_list RPAR
   {if fmt="fmt" && print="Print" then Print(ex_li) else raise Error}
 ;

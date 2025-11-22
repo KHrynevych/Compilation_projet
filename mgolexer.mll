@@ -54,7 +54,7 @@ rule token = parse
   | "<"  { LT } | ">"  { GT } | "&&" { AND } | "||" { OR }
   | "+"  { PLUS } | "-"  { MINUS } | "/"  { SLASH }
   | "++" { PPLUS } | "--" { MMINUS }
-  | "!"  { NOT } | "="  { ASSIGN } | ":=" { DECL }
+  | "!"  { NOT }  | ":=" { DECL } | "="  { ASSIGN }
   | "%"  { PERCENT }
 
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }

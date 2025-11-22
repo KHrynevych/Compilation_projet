@@ -78,7 +78,7 @@ mgotype_list:
 
 (* varstyp + ident_list = vars *)
 varstyp:
-  |  x_list=ident_list t=mgotype   { List.map (fun x -> (x,t)) x_list}
+|  x_list=ident_list t=mgotype   { List.map (fun x -> (x,t)) x_list}
 ;
 
 ident_list:
@@ -127,7 +127,7 @@ instr_simple:
 | ex=expr MMINUS  {Dec(ex)}
 | ex1=expr_list ASSIGN ex2=expr_list          {Set( ex1, ex2 )}
 | id_list=ident_list DECL ex_list=expr_list   
-{ Vars( (id_list, None, List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex_list ))}
+{ Vars( id_list, None, List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex_list )}
 (* pas sûr pour l'option de déclaration, il faut peut être ajouter le type
  d'une façon ou d'une autre voir faire complêtement autrement? *)
 ;
@@ -138,6 +138,7 @@ instr_if:
 *)
 expr:
 | e = expr_desc {  { eloc = $startpos, $endpos; edesc = e } }
+| LPAR e = expr_desc RPAR { { eloc = $startpos, $endpos; edesc = e } }
 ;
 
 expr_desc:
@@ -146,7 +147,6 @@ expr_desc:
 | TRUE {Bool(true)}
 | FALSE {Bool(false)}
 | NIL {Nil}
-| LPAR ex=expr RPAR {ex.edesc} (* pas sûr de celui là, à tester.. *)
 | id=ident {Var(id)}
 | ex=expr POINT id=ident {Dot(ex, id)}
 | id=ident LPAR exl=loption(expr_list) RPAR {Call(id, exl)}

@@ -116,10 +116,15 @@ instr_desc:
 | iif=instr_if {iif}
 | VAR idl=ident_list typ=option(mgotype) {Vars(idl, typ, [])}
 | VAR idl=ident_list typ=option(mgotype) ASSIGN exl=expr_list 
-{Vars(idl, typ, List.map (fun ex -> {iloc= $startpos, $endpos; idesc = Expr(ex)}) exl)}
+ {Vars(idl, typ, List.map (fun ex -> {iloc= $startpos, $endpos; idesc = Expr(ex)}) exl)}
 | RETURN exl=loption(expr_list) {Return(exl)}
 | FOR bl=bloc {For({eloc= $startpos, $endpos; edesc=Bool(true)}, bl)}
 | FOR ex=expr bl=bloc {For(ex, bl)}
+| FOR is1=instr_simple SEMI ex=expr SEMI is2=instr_simple bl=bloc 
+  { Block([
+      { iloc = ($startpos, $endpos); idesc = is1 };
+      { iloc = ($startpos, $endpos); idesc = For(ex, ({ iloc = ($startpos, $endpos); idesc = is2 }) :: bl) }
+    ]) }
 ;
 
 instr_simple:

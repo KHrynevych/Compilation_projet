@@ -113,12 +113,13 @@ instr:
 instr_desc:
 | ins_sim=instr_simple { ins_sim }
 | bl=bloc {Block(bl)}
-(*| iif=instr_if {iif}*)
+| iif=instr_if {iif}
 | VAR idl=ident_list typ=option(mgotype) {Vars(idl, typ, [])}
 | VAR idl=ident_list typ=option(mgotype) ASSIGN exl=expr_list 
 {Vars(idl, typ, List.map (fun ex -> {iloc= $startpos, $endpos; idesc = Expr(ex)}) exl)}
 | RETURN exl=loption(expr_list) {Return(exl)}
 | FOR bl=bloc {For({eloc= $startpos, $endpos; edesc=Bool(true)}, bl)}
+| FOR ex=expr bl=bloc {For(ex, bl)}
 ;
 
 instr_simple:
@@ -131,14 +132,16 @@ instr_simple:
 (* pas sûr pour l'option de déclaration, il faut peut être ajouter le type
  d'une façon ou d'une autre voir faire complêtement autrement? *)
 ;
-(*
+
 instr_if:
-| IF ex=expr
+| IF ex=expr bl=bloc {If(ex, bl, [])}
+| IF ex=expr bl=bloc ELSE bl2=bloc     {If(ex, bl, bl2)}
+| IF ex=expr bl=bloc ELSE ins=instr_if {If(ex, bl, [{iloc= $startpos, $endpos; idesc=ins}])}
 ;
-*)
+
 expr:
 | e = expr_desc {  { eloc = $startpos, $endpos; edesc = e } }
-| LPAR e = expr_desc RPAR { { eloc = $startpos, $endpos; edesc = e } }
+| LPAR e = expr RPAR { e }
 ;
 
 expr_desc:

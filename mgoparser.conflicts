@@ -1,0 +1,109 @@
+
+** Conflict (shift/reduce) in state 125.
+** Token involved: COMMA
+** This state is reached from prog after reading:
+
+PACKAGE IDENT SEMI FUNC ident LPAR loption(params) RPAR loption(type_retour) BEGIN ident
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+PACKAGE IDENT SEMI list(decl) EOF 
+                   decl list(decl) 
+                   FUNC ident LPAR loption(params) RPAR loption(type_retour) bloc SEMI 
+                                                                             BEGIN loption(instr_list) END 
+                                                                                   instr_list 
+                                                                                   instr option(SEMI) 
+                                                                                   instr_desc 
+                                                                                   instr_simple 
+                                                                                   (?)
+
+** In state 125, looking ahead at COMMA, reducing production
+** expr_desc -> ident
+** is permitted because of the following sub-derivation:
+
+expr_list ASSIGN expr_list 
+expr COMMA expr_list // lookahead token appears
+expr_desc // lookahead token is inherited
+ident . 
+
+** In state 125, looking ahead at COMMA, shifting is permitted
+** because of the following sub-derivation:
+
+ident_list DECL expr_list 
+ident . COMMA ident_list 
+
+** Conflict (shift/reduce) in state 107.
+** Tokens involved: STAR SLASH POINT PLUS PERCENT OR NEQ MINUS LT LE GT GE EQ AND
+** The following explanations concentrate on token STAR.
+** This state is reached from prog after reading:
+
+PACKAGE IDENT SEMI FUNC ident LPAR loption(params) RPAR loption(type_retour) BEGIN NOT expr
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+PACKAGE IDENT SEMI list(decl) EOF 
+                   decl list(decl) 
+                   FUNC ident LPAR loption(params) RPAR loption(type_retour) bloc SEMI 
+                                                                             BEGIN loption(instr_list) END 
+                                                                                   instr_list 
+                                                                                   instr option(SEMI) 
+                                                                                   instr_desc 
+                                                                                   instr_simple 
+                                                                                   expr 
+                                                                                   expr_desc 
+                                                                                   (?)
+
+** In state 107, looking ahead at STAR, reducing production
+** expr_desc -> NOT expr
+** is permitted because of the following sub-derivation:
+
+expr STAR expr // lookahead token appears
+expr_desc // lookahead token is inherited
+NOT expr . 
+
+** In state 107, looking ahead at STAR, shifting is permitted
+** because of the following sub-derivation:
+
+NOT expr 
+    expr_desc 
+    expr . STAR expr 
+
+** Conflict (shift/reduce) in state 60.
+** Token involved: POINT
+** This state is reached from prog after reading:
+
+PACKAGE IDENT SEMI FUNC ident LPAR loption(params) RPAR loption(type_retour) BEGIN IDENT
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+PACKAGE IDENT SEMI list(decl) EOF 
+                   decl list(decl) 
+                   FUNC ident LPAR loption(params) RPAR loption(type_retour) bloc SEMI 
+                                                                             BEGIN loption(instr_list) END 
+                                                                                   instr_list 
+                                                                                   instr option(SEMI) 
+                                                                                   instr_desc 
+                                                                                   instr_simple 
+                                                                                   expr 
+                                                                                   expr_desc 
+                                                                                   (?)
+
+** In state 60, looking ahead at POINT, shifting is permitted
+** because of the following sub-derivation:
+
+IDENT . POINT IDENT LPAR expr_list RPAR 
+
+** In state 60, looking ahead at POINT, reducing production
+** ident -> IDENT
+** is permitted because of the following sub-derivation:
+
+expr POINT ident // lookahead token appears
+expr_desc // lookahead token is inherited
+ident // lookahead token is inherited
+IDENT . 

@@ -55,7 +55,7 @@ rule token = parse
   | "+"  { PLUS } | "-"  { MINUS } | "/"  { SLASH }
   | "++" { PPLUS } | "--" { MMINUS }
   | "!"  { NOT }  | ":=" { DECL } | "="  { ASSIGN }
-  | "%"  { PERCENT }
+  | "%"  { PERCENT } | "fmt.Print" {FMTPRINT}
 
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }

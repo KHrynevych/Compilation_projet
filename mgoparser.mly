@@ -18,6 +18,7 @@
 %token AND OR ASSIGN DECL
 %token POINT
 %token PPLUS MMINUS
+%token FMTPRINT
 %token EOF
 
 %start prog
@@ -29,6 +30,8 @@
 %left PLUS MINUS
 %left STAR SLASH PERCENT
 %left POINT
+%nonassoc NOT
+
 
 %%
 
@@ -132,10 +135,12 @@ instr_simple:
 | ex=expr PPLUS   {Inc(ex)}
 | ex=expr MMINUS  {Dec(ex)}
 | ex1=expr_list ASSIGN ex2=expr_list          {Set( ex1, ex2 )}
-| id_list=ident_list DECL ex_list=expr_list   
-{ Vars( id_list, None, List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex_list )}
-(* pas sûr pour l'option de déclaration, il faut peut être ajouter le type
- d'une façon ou d'une autre voir faire complêtement autrement? *)
+| ex1=expr_list DECL ex2=expr_list
+{ Vars( List.map (fun ex -> match ex.edesc with
+| Var id -> id
+| _ -> raise Error) ex1,
+        None, 
+        List.map (fun ex -> {iloc= $startpos, $endpos; idesc=Expr(ex)}) ex2 )}
 ;
 
 instr_if:
@@ -158,8 +163,7 @@ expr_desc:
 | id=ident {Var(id)}
 | ex=expr POINT id=ident {Dot(ex, id)}
 | id=ident LPAR exl=loption(expr_list) RPAR {Call(id, exl)}
-| fmt=IDENT POINT print=IDENT LPAR ex_li=expr_list RPAR
-  {if fmt="fmt" && print="Print" then Print(ex_li) else raise Error}
+| FMTPRINT LPAR ex_li=expr_list RPAR {Print(ex_li)}
 | NOT ex=expr {Unop(Not, ex)}
 | MINUS ex=expr {Unop(Opp, ex)}
 

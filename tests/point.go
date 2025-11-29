@@ -13,5 +13,5 @@ func main() {
      b.x = 3;
      b.y = 4;
      fmt.Print(a.x + a.y + b.x + b.y)
-};
+}
 

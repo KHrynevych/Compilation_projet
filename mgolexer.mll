@@ -25,6 +25,18 @@
         let n = Int64.of_string s in
         if n < Int64.zero || n > max_i64 then raise Exit; n
       with _ -> raise (Error "invalid or out-of-range integer literal")      
+
+  let insert_semi = ref false
+
+  (* sop = semi_ou_pas (nom raccourci pour rendre le code moins moche...) *)
+  (* il y a peut etre des endroits où l'analyseur rajoute des semi alors qu'il devrait juste renvoyer un erreur :( *)
+  let sop t =
+    insert_semi := (match t with
+      | IDENT _ | INT _ | STRING _
+      | TRUE | FALSE | NIL | RETURN
+      | PPLUS | MMINUS | RPAR | END -> true
+      | _ -> false);
+    t
 }
 
 let digit = ['0'-'9']
@@ -37,25 +49,35 @@ let ident = alpha (alpha | digit)*
 
   
 rule token = parse
-  | [' ' '\t' '\r' '\n']+
+  | [' ' '\t']+     { token lexbuf }
+  
+  | '\n' | '\r' {
+      new_line lexbuf;
+      if !insert_semi then (
+        insert_semi := false;
+        SEMI
+      ) else (
+        token lexbuf
+      )
+    }
 
   | "//" [^ '\n']*  { token lexbuf }
   | "/*"            { comment lexbuf; token lexbuf }
 
-  | intlit as n  { INT(int64_of_lexeme n) }
-  | ident as id  { keyword_or_ident id }
+  | intlit as n  { sop (INT(int64_of_lexeme n)) }
+  | ident as id  { sop (keyword_or_ident id) }
   | '"'          { string_lit (Buffer.create 16) lexbuf }
 
-  | ";"  { SEMI } | "("  { LPAR } | ")"  { RPAR }
-  | "{"  { BEGIN } | "}"  { END } | "*"  { STAR }
-  | "."  { POINT } | ","  { COMMA }
+  | ";"  { sop SEMI } | "("  { sop LPAR } | ")"  { sop RPAR }
+  | "{"  { sop BEGIN } | "}"  { sop END } | "*"  { sop STAR }
+  | "."  { sop POINT } | ","  { sop COMMA }
 
-  | "==" { EQ } | "!=" { NEQ } | "<=" { LE } | ">=" { GE }
-  | "<"  { LT } | ">"  { GT } | "&&" { AND } | "||" { OR }
-  | "+"  { PLUS } | "-"  { MINUS } | "/"  { SLASH }
-  | "++" { PPLUS } | "--" { MMINUS }
-  | "!"  { NOT }  | ":=" { DECL } | "="  { ASSIGN }
-  | "%"  { PERCENT } | "fmt.Print" {FMTPRINT}
+  | "==" { sop EQ } | "!=" { sop NEQ } | "<=" { sop LE } | ">=" { sop GE }
+  | "<"  { sop LT } | ">"  { sop GT } | "&&" { sop AND } | "||" { sop OR }
+  | "+"  { sop PLUS } | "-"  { sop MINUS } | "/"  { sop SLASH }
+  | "++" { sop PPLUS } | "--" { sop MMINUS }
+  | "!"  { sop NOT }  | ":=" { sop DECL } | "="  { sop ASSIGN }
+  | "%"  { sop PERCENT } | "fmt.Print" { sop FMTPRINT}
 
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
@@ -66,7 +88,7 @@ and comment = parse
   | _    { comment lexbuf }
   | eof  { raise (Error "unterminated comment") }
 and string_lit buf = parse
-  | '"'         { STRING (Buffer.contents buf) }
+  | '"'         { sop (STRING (Buffer.contents buf)) }
   | "\\\\"      { Buffer.add_char buf '\\'; string_lit buf lexbuf }
   | "\\\""      { Buffer.add_char buf '"';  string_lit buf lexbuf }
   | "\\n"       { Buffer.add_char buf '\n'; string_lit buf lexbuf }

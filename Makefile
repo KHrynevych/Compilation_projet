@@ -25,6 +25,16 @@ testinstr: $(EXE) tests/instr.go
 
 testdiv: $(EXE) tests/div.go
 	-./$(EXE) --parse-only tests/div.go
+
+testall: $(EXE) tests/test.go tests/min.go tests/arith.go tests/var.go tests/point.go tests/instr.go tests/div.go
+	-./$(EXE) --parse-only tests/test.go
+	-./$(EXE) --parse-only tests/min.go
+	-./$(EXE) --parse-only tests/arith.go
+	-./$(EXE) --parse-only tests/var.go
+	-./$(EXE) --parse-only tests/point.go
+	-./$(EXE) --parse-only tests/instr.go
+	-./$(EXE) --parse-only tests/div.go
+
 .PHONY: clean
 clean:
 	dune clean

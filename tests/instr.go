@@ -11,6 +11,6 @@ func main() {
     if (n%2 != 0) { acc = a*acc }; 
     a = a*a;
     n = n/2
-  }
+  };
   fmt.Print(acc);
 };

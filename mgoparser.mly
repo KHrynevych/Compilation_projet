@@ -69,7 +69,7 @@ mgotype:
                     | "int"    -> TInt
                     | "bool"   -> TBool
                     | "string" -> TString
-                    | _        -> TStruct s
+                    | _        -> raise Error
                     }
 ;
 

@@ -59,7 +59,7 @@ let lookup_field (fields : (ident * typ) list) (fname : string) : (typ * locatio
   in
   aux fields
 
-(* ---------- Typage des expressions ---------- *)
+(* Typage des expressions *)
 
 let rec check_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:expr) (expected:typ) : unit =
   match e.edesc with
@@ -84,7 +84,64 @@ and type_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:expr) 
       (match Env.find_opt id.id tenv with
        | Some t -> t
        | None -> error id.loc (Printf.sprintf "undefined variable %s" id.id))
-  | Dot (ex, fid) -> ...
+  | Dot (ex, fid) -> 
+      (match type_expr ~fmt_imported senv fenv tenv ex with
+        | TStruct s ->
+            let fields =
+              match Env.find_opt s senv with
+              | Some fs -> fs
+              | None -> error ex.eloc (Printf.sprintf "unkown struct %s" s)
+            in
+            (match lookup_field fields fid.id with
+            | t, _ -> t
+            | exception Not_found -> error fid.loc (Printf.sprintf "unkown field %s in %s" fid.id s))
+        | t -> error ex.eloc (Printf.sprintf "field selection on non-struct (%s)" (typ_to_string t)))
+  | Call (fid, args) ->
+      (match Env.find_opt fid.id fenv with
+       | None -> error fid.loc (Printf.sprintf "undefined function %s" fid.id)
+       | Some (ptys, rtys, _def) ->
+           let nargs = List.length args and nparams = List.length ptys in
+           if nargs <> nparams then
+             error e.eloc (Printf.sprintf "function %s expects %d arg(s), got %d"
+                              fid.id nparams nargs);
+           List.iter2 (fun a t -> check_expr ~fmt_imported senv fenv tenv a t) args ptys;
+           (match rtys with
+            | [t] -> t
+            | []  -> error e.eloc "function returns no value"
+            | _   -> error e.eloc "multiple-value used in single-value context"))
+  | Print args ->
+      if not fmt_imported then error e.eloc "fmt not imported: Print is unavailable";
+      List.iter (fun a -> ignore (type_expr ~fmt_imported senv fenv tenv a)) args;
+      TInt
+  | Unop (Not, e1) ->
+      check_expr ~fmt_imported senv fenv tenv e1 TBool; TBool
+  | Unop (Opp, e1) ->
+      check_expr ~fmt_imported senv fenv tenv e1 TInt; TInt
+  | Binop (Add, a, b)
+  | Binop (Sub, a, b)
+  | Binop (Mul, a, b)
+  | Binop (Div, a, b)
+  | Binop (Rem, a, b) ->
+      check_expr ~fmt_imported senv fenv tenv a TInt;
+      check_expr ~fmt_imported senv fenv tenv b TInt; TInt
+  | Binop (Lt, a, b) | Binop (Le, a, b)
+  | Binop (Gt, a, b) | Binop (Ge, a, b) ->
+      check_expr ~fmt_imported senv fenv tenv a TInt;
+      check_expr ~fmt_imported senv fenv tenv b TInt; TBool
+  | Binop (Eq, a, b) | Binop (Neq, a, b) ->
+      let ta = type_expr ~fmt_imported senv fenv tenv a in
+      let tb = type_expr ~fmt_imported senv fenv tenv b in
+      if not (equal_typ ta tb) then type_error e.eloc ta tb;
+      TBool
+  | Binop (And, a, b) | Binop (Or, a, b) ->
+      check_expr ~fmt_imported senv fenv tenv a TBool;
+      check_expr ~fmt_imported senv fenv tenv b TBool; TBool
+
+let is_lvalue (e : expr) : bool =
+  match e.edesc with
+  | Var _ | Dot _ -> true
+  | _ -> false
+        
 
 let prog (fmt,ld) =
   (* collecte les noms des fonctions et des structures sans les vérifier *)

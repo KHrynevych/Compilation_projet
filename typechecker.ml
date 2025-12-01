@@ -228,38 +228,27 @@ let check_function ~fmt_imported senv fenv (_ps, _rs, f) : unit =
   ignore (check_seq ~fmt_imported senv fenv f.return tenv0 f.body)
 
 
-let prog (fmt,ld) =
-  (* collecte les noms des fonctions et des structures sans les vérifier *)
-  let (fenv,senv) =
+(* Entrée principale *)
+
+let prog (fmt_imported, decls) =
+  (* Collecte des structs et fonctions (détection des doublons) *)
+  let (fenv, senv) =
     List.fold_left
-      (fun (fenv,senv) d ->
-         match d with Struct(s) -> (fenv, Env.add s.sname.id s.fields senv)
-                    | Fun(f)   -> failwith "à compléter")
-      (Env.empty, Env.empty) ld
+      (fun (fenv, senv) d ->
+         match d with
+         | Struct s ->
+             if Env.mem s.sname.id senv then
+               error s.sname.loc (Printf.sprintf "duplicate struct %s" s.sname.id);
+             (fenv, Env.add s.sname.id s.fields senv)
+         | Fun f ->
+             let ptys = List.map snd f.params in
+             let rtys = f.return in
+             if Env.mem f.fname.id fenv then
+               error f.fname.loc (Printf.sprintf "duplicate function %s" f.fname.id);
+             (Env.add f.fname.id (ptys, rtys, f) fenv, senv))
+      (Env.empty, Env.empty) decls
   in
-  let check_typ t = failwith "case not implemented in check_typ"
-  in
-  let check_fields lf = failwith "case not implemented in check_fields"
-  in
-  let rec check_expr e typ tenv =
-    if e.edesc = Nil then  failwith "case not implemented in check"
-    else let typ_e = type_expr e tenv in
-    if typ_e <> typ then type_error e.eloc typ_e typ
-  and type_expr e tenv = match e.edesc with
-    | Int _  -> TInt
-    | _ -> failwith "case not implemented in type_expr"
-
-  in
-
-  let rec check_instr i ret tenv = match i.idesc with
-    | _ -> failwith "case not implemented in check_instr"
-  and check_seq s ret tenv =
-    List.iter (fun i -> check_instr i ret tenv) s
-  in
-  
-  let check_function f = failwith "case not implemented in check_function"
-
-  in Env.iter (fun _ lf -> check_fields lf) senv;
-     Env.iter (fun _ fd -> check_function fd) fenv
-
-
+  (* Vérifier les champs de toutes les structs *)
+  Env.iter (fun _ lf -> check_fields senv lf) senv;
+  (* Vérifier toutes les fonctions *)
+  Env.iter (fun _ fd -> check_function ~fmt_imported senv fenv fd) fenv

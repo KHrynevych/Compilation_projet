@@ -16,9 +16,9 @@ module Env = Map.Make(String)
 *)
     
 type tenv = typ Env.t
-type fenv = (typ list) * (typ list) Env.t
-type senv = (ident * typ) list
+type senv = ((ident * typ) list) Env.t
 type fdef = func_def
+type fenv = (typ list * typ list * fdef) Env.t 
 
 let dloc : location = (Lexing.dummy_pos, Lexing.dummy_pos)
 
@@ -113,10 +113,8 @@ and type_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:expr) 
       if not fmt_imported then error e.eloc "fmt not imported: Print is unavailable";
       List.iter (fun a -> ignore (type_expr ~fmt_imported senv fenv tenv a)) args;
       TInt
-  | Unop (Not, e1) ->
-      check_expr ~fmt_imported senv fenv tenv e1 TBool; TBool
-  | Unop (Opp, e1) ->
-      check_expr ~fmt_imported senv fenv tenv e1 TInt; TInt
+  | Unop (Not, e1) -> check_expr ~fmt_imported senv fenv tenv e1 TBool; TBool
+  | Unop (Opp, e1) -> check_expr ~fmt_imported senv fenv tenv e1 TInt; TInt
   | Binop (Add, a, b)
   | Binop (Sub, a, b)
   | Binop (Mul, a, b)
@@ -177,7 +175,7 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
         tl tr;
       tenv
   | Vars (ids, t_opt, init_seq) ->
-      (* on attend à des initialisations sous forme d’instructions Expr e *)
+      (* on attend à des initialisations sous forme d'instructions Expr e *)
       let inits =
         List.map
           (function
@@ -187,7 +185,7 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
       in
       (match t_opt, inits with
        | None, [] ->
-           (* var x, y; → déclarées mais non initialisées : on peut refuser l’usage ultérieur avant assignation
+           (* var x, y; -> déclarées mais non initialisées : on peut refuser l’usage ultérieur avant assignation
               Ici on les interdit sans type : on lève une erreur explicite. *)
            error i.iloc "untyped variables require initial values"
        | None, _ ->
@@ -219,7 +217,16 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
 
 and check_seq ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) (tenv:tenv) (s:seq) : tenv =
   List.fold_left (check_instr ~fmt_imported senv fenv ret) tenv s
-        
+
+
+(* Vérification d'une fonction *)
+
+let check_function ~fmt_imported senv fenv (_ps, _rs, f) : unit =
+  List.iter (fun (_id, t) -> check_typ senv t) f.params;
+  List.iter (check_typ senv) f.return;
+  let tenv0 = add_env f.params Env.empty in
+  ignore (check_seq ~fmt_imported senv fenv f.return tenv0 f.body)
+
 
 let prog (fmt,ld) =
   (* collecte les noms des fonctions et des structures sans les vérifier *)

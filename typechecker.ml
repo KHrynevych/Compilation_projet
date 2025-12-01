@@ -141,6 +141,84 @@ let is_lvalue (e : expr) : bool =
   match e.edesc with
   | Var _ | Dot _ -> true
   | _ -> false
+
+(* Typage des instructions *)
+
+let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) (tenv:tenv) (i:instr) : tenv =
+  match i.idesc with
+  | Expr e ->
+      ignore (type_expr ~fmt_imported senv fenv tenv e); tenv
+  | Block bl ->
+      ignore (check_seq ~fmt_imported senv fenv ret tenv bl); tenv
+  | If (cond, thn, els) ->
+      check_expr ~fmt_imported senv fenv tenv cond TBool;
+      ignore (check_seq ~fmt_imported senv fenv ret tenv thn);
+      ignore (check_seq ~fmt_imported senv fenv ret tenv els);
+      tenv
+  | For (cond, body) ->
+      check_expr ~fmt_imported senv fenv tenv cond TBool;
+      ignore (check_seq ~fmt_imported senv fenv ret tenv body); tenv
+  | Inc e ->
+      check_expr ~fmt_imported senv fenv tenv e TInt;
+      if not (is_lvalue e) then error i.iloc "++ must target a variable/field";
+      tenv
+  | Dec e ->
+      check_expr ~fmt_imported senv fenv tenv e TInt;
+      if not (is_lvalue e) then error i.iloc "-- must target a variable/field";
+      tenv
+  | Set (lvals, rvals) ->
+      let tl = List.map (fun e -> if not (is_lvalue e) then error i.iloc "assignment target is not assignable";
+                                   type_expr ~fmt_imported senv fenv tenv e) lvals in
+      let tr = List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) rvals in
+      if List.length tl <> List.length tr then
+        error i.iloc "assignment arity mismatch";
+      List.iter2
+        (fun ta tb -> if not (equal_typ ta tb) then type_error i.iloc tb ta)
+        tl tr;
+      tenv
+  | Vars (ids, t_opt, init_seq) ->
+      (* on attend à des initialisations sous forme d’instructions Expr e *)
+      let inits =
+        List.map
+          (function
+            | { idesc = Expr e; _ } -> e
+            | _ -> error i.iloc "initializers must be expressions")
+          init_seq
+      in
+      (match t_opt, inits with
+       | None, [] ->
+           (* var x, y; → déclarées mais non initialisées : on peut refuser l’usage ultérieur avant assignation
+              Ici on les interdit sans type : on lève une erreur explicite. *)
+           error i.iloc "untyped variables require initial values"
+       | None, _ ->
+           if List.length ids <> List.length inits then
+             error i.iloc "declaration arity mismatch";
+           let inferred =
+             List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) inits
+           in
+           let tenv' =
+             List.fold_left2
+               (fun acc id t -> if id.id = dummy then acc else Env.add id.id t acc)
+               tenv ids inferred
+           in
+           tenv'
+       | Some t, _ ->
+           (* vérifier types des initialisations si présentes *)
+           List.iter (fun e -> check_expr ~fmt_imported senv fenv tenv e t) inits;
+           let tenv' =
+             List.fold_left
+               (fun acc id -> if id.id = dummy then acc else Env.add id.id t acc)
+               tenv ids
+           in
+           tenv')
+  | Return exs ->
+      if List.length ret <> List.length exs then
+        error i.iloc "return arity mismatch";
+      List.iter2 (fun t e -> check_expr ~fmt_imported senv fenv tenv e t) ret exs;
+      tenv
+
+and check_seq ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) (tenv:tenv) (s:seq) : tenv =
+  List.fold_left (check_instr ~fmt_imported senv fenv ret) tenv s
         
 
 let prog (fmt,ld) =

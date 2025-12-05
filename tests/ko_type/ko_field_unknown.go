@@ -8,7 +8,7 @@ type Point struct {
 };
 
 func main() {
-  var p Point;
+  var p *Point;
   p.x = 1;
   p.y = 2;
   p.z = 3;

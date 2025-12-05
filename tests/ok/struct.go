@@ -7,12 +7,12 @@ type Point struct {
   y int;
 };
 
-func normSquared(p Point) int {
+func normSquared(p *Point) int {
   return p.x * p.x + p.y * p.y;
 };
 
 func main() {
-  var p Point;
+  var p *Point;
   p.x = 3;
   p.y = 4;
   var n int;

@@ -1,32 +1,27 @@
 package main
 import "fmt"
 
-// Test de la plupart structures syntaxiques bizarres
+// Test de la plupart structures syntaxiques bizarres (!!ne peut pas s'exécuter car boucle infinie!!)
 
-type S struct { x, y int; z *S; }; // Point-virgule final optionnel dans struct
+type S struct { x, y int; z *S; };
 
 func main() {
-    // Déclarations multiples et initialisations
     var a, b int = 1, 2;
     var c = 3
     d := 4
     
-    // Assignations multiples
     a, b = c, d
-    
-    // Blocs et imbrication
+
     {
         var x int
-        x = 0; // Point-virgule explicite
+        x = 0; 
     }
 
-    // Boucles 'for' (les 4 variantes de la grammaire)
-    for { break }           // Boucle infinie
-    for a < b { a++ }       // While
-    for i:=0; i<10; i++ {};  // For classique
-    for i:=0; i<10; {}      // Instruction simple manquante à la fin
+    for { c++ }           // Boucle infinie
+    for a < b { a++ }       
+    for i:=0; i<10; i++ {};  
+    for i:=0; i<10; {}      
 
-    // If / Else et imbrication (Dangling else)
     if a == b {
         fmt.Print(a)
     } else if a < b {
@@ -35,8 +30,7 @@ func main() {
         fmt.Print(b)
     }
 
-    // Appels et expressions
-    f(1, 2,) // Virgule traînante autorisée par votre grammaire (params)
+    f(1, 2) 
 }
 
-func f(x, y int,) {} // Virgule traînante dans déclaration
+func f(x, y int) {return 5} 

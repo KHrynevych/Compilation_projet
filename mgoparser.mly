@@ -126,7 +126,23 @@ instr_desc:
 | FOR is1=instr_simple SEMI ex=expr SEMI is2=instr_simple bl=bloc 
   { Block([
       { iloc = ($startpos, $endpos); idesc = is1 };
-      { iloc = ($startpos, $endpos); idesc = For(ex, ({ iloc = ($startpos, $endpos); idesc = is2 }) :: bl) }
+      { iloc = ($startpos, $endpos); idesc = For(ex, 
+                                                    (let rec aj_fin b i = match b with 
+                                                    | [] -> [{iloc = ($startpos, $endpos); idesc = is2 }]
+                                                    | l::bb -> l::aj_fin bb i
+                                                    in aj_fin bl is2)
+      ) }
+    ]) }
+| FOR SEMI ex=expr SEMI is2=instr_simple bl=bloc 
+{ For(ex, (let rec aj_fin b i = match b with 
+                                | [] -> [{iloc = ($startpos, $endpos); idesc = is2 }]
+                                | l::bb -> l::aj_fin bb i
+                                in
+                                aj_fin bl is2)) }
+| FOR is1=instr_simple SEMI ex=expr SEMI bl=bloc
+  { Block([
+      { iloc = ($startpos, $endpos); idesc = is1 };
+      { iloc = ($startpos, $endpos); idesc = For(ex, bl) }
     ]) }
 ;
 

@@ -294,4 +294,6 @@ let prog (fmt_imported, decls) =
   (* Vérifier les champs de toutes les structs *)
   Env.iter (fun _ lf -> check_fields senv lf) senv;
   (* Vérifier toutes les fonctions *)
-  Env.iter (fun _ fd -> check_function ~fmt_imported senv fenv fd) fenv
+  Env.iter (fun _ fd -> check_function ~fmt_imported senv fenv fd) fenv;
+
+  decls

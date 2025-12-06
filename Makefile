@@ -32,9 +32,13 @@ testkot: $(EXE) $(KOT)ko_assign_type.go $(KOT)ko_field_unknown.go $(KOT)ko_print
 	-./$(EXE) $(KOT)ko_print_no_import.go
 	-./$(EXE) $(KOT)ko_return_arity.go
 
-testkos: $(EXE) $(KOS)accolade.go $(KOS)mauvaise_decl.go
+testkos: $(EXE) $(KOS)accolade.go $(KOS)mauvaise_decl.go $(KOS)nomain.go $(KOS)nopars.go $(KOS)nofunction.go $(KOS)virgule.go
 	-./$(EXE) $(KOS)accolade.go
 	-./$(EXE) $(KOS)mauvaise_decl.go
+	-./$(EXE) $(KOS)nomain.go
+	-./$(EXE) $(KOS)nopars.go
+	-./$(EXE) $(KOS)nofunction.go
+	-./$(EXE) $(KOS)virgule.go
 
 .PHONY: clean
 clean:

@@ -71,6 +71,37 @@ let rec check_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:e
       let te = type_expr ~fmt_imported senv fenv tenv e in
       if not (equal_typ te expected) then type_error e.eloc te expected
 
+and call_signature ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv)
+                   (fid:ident) (args:expr list) : typ list =
+  if fid.id = "new" then
+    (* new(S) : S doit être une struct connue, utilisée comme ident *)
+    (match args with
+     | [e1] ->
+         (match e1.edesc with
+          | Var id ->
+              if not (Env.mem id.id senv) then
+                error e1.eloc (Printf.sprintf "unknown struct %s" id.id);
+              [TStruct id.id]
+          | _ ->
+              error e1.eloc "new expects a struct name")
+     | _ ->
+         error fid.loc "new expects exactly one argument")
+  else
+    match Env.find_opt fid.id fenv with
+    | None ->
+        error fid.loc (Printf.sprintf "undefined function %s" fid.id)
+    | Some (ptys, rtys, _def) ->
+        let nargs = List.length args and nparams = List.length ptys in
+        if nargs <> nparams then
+          error fid.loc
+            (Printf.sprintf "function %s expects %d arg(s), got %d"
+               fid.id nparams nargs);
+        List.iter2
+          (fun a t -> check_expr ~fmt_imported senv fenv tenv a t)
+          args ptys;
+        rtys
+
+
 and type_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:expr) : typ =
   match e.edesc with
   | Int _    -> TInt
@@ -97,22 +128,20 @@ and type_expr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (tenv:tenv) (e:expr) 
             | exception Not_found -> error fid.loc (Printf.sprintf "unkown field %s in %s" fid.id s))
         | t -> error ex.eloc (Printf.sprintf "field selection on non-struct (%s)" (typ_to_string t)))
   | Call (fid, args) ->
-      (match Env.find_opt fid.id fenv with
-       | None -> error fid.loc (Printf.sprintf "undefined function %s" fid.id)
-       | Some (ptys, rtys, _def) ->
-           let nargs = List.length args and nparams = List.length ptys in
-           if nargs <> nparams then
-             error e.eloc (Printf.sprintf "function %s expects %d arg(s), got %d"
-                              fid.id nparams nargs);
-           List.iter2 (fun a t -> check_expr ~fmt_imported senv fenv tenv a t) args ptys;
-           (match rtys with
-            | [t] -> t
-            | []  -> error e.eloc "function returns no value"
-            | _   -> error e.eloc "multiple-value used in single-value context"))
+      let rtys = call_signature ~fmt_imported senv fenv tenv fid args in
+      (match rtys with
+       | [t] -> t
+       | []  -> error e.eloc "function returns no value"
+       | _   -> error e.eloc "multiple-value used in single-value context")
   | Print args ->
       if not fmt_imported then error e.eloc "fmt not imported: Print is unavailable";
-      List.iter (fun a -> ignore (type_expr ~fmt_imported senv fenv tenv a)) args;
-      TInt
+      List.iter
+        (fun a -> match a.edesc with
+                  | Call (fid, call_args) ->
+                      ignore (call_signature ~fmt_imported senv fenv tenv fid call_args)
+                  | _ ->
+                      ignore (type_expr ~fmt_imported senv fenv tenv a))
+        args; TInt
   | Unop (Not, e1) -> check_expr ~fmt_imported senv fenv tenv e1 TBool; TBool
   | Unop (Opp, e1) -> check_expr ~fmt_imported senv fenv tenv e1 TInt; TInt
   | Binop (Add, a, b)
@@ -165,15 +194,27 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
       if not (is_lvalue e) then error i.iloc "-- must target a variable/field";
       tenv
   | Set (lvals, rvals) ->
-      let tl = List.map (fun e -> if not (is_lvalue e) then error i.iloc "assignment target is not assignable";
-                                   type_expr ~fmt_imported senv fenv tenv e) lvals in
-      let tr = List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) rvals in
-      if List.length tl <> List.length tr then
-        error i.iloc "assignment arity mismatch";
-      List.iter2
-        (fun ta tb -> if not (equal_typ ta tb) then type_error i.iloc tb ta)
-        tl tr;
-      tenv
+    let tl =
+      List.map
+        (fun e ->
+          if not (is_lvalue e) then error i.iloc "assignment target is not assignable";
+          type_expr ~fmt_imported senv fenv tenv e)
+        lvals
+    in
+    let trtys =
+      match rvals with
+      | [ { edesc = Call (fid, args); _ } ] ->
+          (* multi-retour possible *)
+          call_signature ~fmt_imported senv fenv tenv fid args
+      | _ ->
+          List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) rvals
+    in
+    if List.length tl <> List.length trtys then
+      error i.iloc "assignment arity mismatch";
+    List.iter2
+      (fun ta tb -> if not (equal_typ ta tb) then type_error i.iloc tb ta)
+      tl trtys;
+    tenv
   | Vars (ids, t_opt, init_seq) ->
       (* on attend à des initialisations sous forme d'instructions Expr e *)
       let inits =
@@ -183,32 +224,34 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
             | _ -> error i.iloc "initializers must be expressions")
           init_seq
       in
+      let n_ids = List.length ids in
       (match t_opt, inits with
-       | None, [] ->
-           (* var x, y; -> déclarées mais non initialisées : on peut refuser l’usage ultérieur avant assignation
-              Ici on les interdit sans type : on lève une erreur explicite. *)
-           error i.iloc "untyped variables require initial values"
-       | None, _ ->
-           if List.length ids <> List.length inits then
-             error i.iloc "declaration arity mismatch";
-           let inferred =
-             List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) inits
-           in
-           let tenv' =
-             List.fold_left2
-               (fun acc id t -> if id.id = dummy then acc else Env.add id.id t acc)
-               tenv ids inferred
-           in
-           tenv'
-       | Some t, _ ->
-           (* vérifier types des initialisations si présentes *)
-           List.iter (fun e -> check_expr ~fmt_imported senv fenv tenv e t) inits;
-           let tenv' =
-             List.fold_left
-               (fun acc id -> if id.id = dummy then acc else Env.add id.id t acc)
-               tenv ids
-           in
-           tenv')
+      | None, [] ->
+          error i.iloc "untyped variables require initial values"
+      | None, [ { edesc = Call (fid, args); _ } as ecall ] ->
+          (* cas multi-retour : x,y := f(...) *)
+          let rtys = call_signature ~fmt_imported senv fenv tenv fid args in
+          if List.length rtys <> n_ids then
+            error i.iloc "declaration arity mismatch";
+          List.fold_left2
+            (fun acc id t ->
+                if id.id = dummy then acc else Env.add id.id t acc)
+            tenv ids rtys
+      | None, _ when n_ids = List.length inits ->
+          (* cas simple : un expr par ident *)
+          let inferred =
+            List.map (fun e -> type_expr ~fmt_imported senv fenv tenv e) inits
+          in
+          List.fold_left2
+            (fun acc id t -> if id.id = dummy then acc else Env.add id.id t acc)
+            tenv ids inferred
+      | None, _ ->
+          error i.iloc "declaration arity mismatch"
+      | Some t, _ ->
+          List.iter (fun e -> check_expr ~fmt_imported senv fenv tenv e t) inits;
+          List.fold_left
+            (fun acc id -> if id.id = dummy then acc else Env.add id.id t acc)
+            tenv ids)
   | Return exs ->
       if List.length ret <> List.length exs then
         error i.iloc "return arity mismatch";

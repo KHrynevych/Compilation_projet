@@ -108,7 +108,6 @@ instr_list:
 | ins1=instr SEMI ins_list=instr_list {ins1::ins_list}
 ;
 
-(* il faut compléter les cas pour instr, instr_simple, expr, expr_desc, etc *)
 instr:
 | i=instr_desc { {iloc= $startpos, $endpos; idesc = i} }
 ;
@@ -198,7 +197,6 @@ expr_desc:
 | ex1=expr OR ex2=expr {Binop(Or, ex1, ex2)}
 ;
 
-(* liste d'expressions non nulle séparées par des virgules *)
 expr_list:
 | e=expr {[e]}
 | e=expr COMMA e1=expr_list {e::e1}

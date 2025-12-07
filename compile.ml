@@ -93,8 +93,23 @@ let rec collect_seq (s:seq) ((venv, next_off) : venv * int) : venv * int =
     (venv, next_off) s
 
 let build_venv (f:func_def) : venv * int =
-  (* on part de next_off = 0, on descend de -4 en -4 *)
-  let venv, next_off = collect_seq f.body (Env.empty, 0) in
+  (* 1. Construction de l'environnement des paramètres *)
+  (* Le dernier paramètre empilé est à l'offset 8($fp) (juste au dessus de RA et FP).
+     Comme Call empile dans l'ordre de la liste, le dernier élément de f.params
+     est celui qui a l'offset 8. *)
+  let rec add_params env l offset =
+    match l with
+    | [] -> env
+    | (id, _)::q -> 
+        (* On ajoute le paramètre courant et on augmente l'offset pour le suivant (qui est 'avant' dans la liste d'origine) *)
+        add_params (Env.add id.id offset env) q (offset + 4)
+  in
+  (* On inverse la liste des paramètres pour commencer par le dernier (offset 8) et remonter *)
+  let param_env = add_params Env.empty (List.rev f.params) 8 in
+
+  (* 2. Ajout des variables locales (offsets négatifs) *)
+  (* on part de param_env au lieu de Env.empty *)
+  let venv, next_off = collect_seq f.body (param_env, 0) in
   let locals_size = -next_off in  (* locals_size >= 0 *)
   (venv, locals_size)
 
@@ -254,13 +269,13 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
       aux lhs rhs
 
   | If (c, s1, s2) ->
-      let then_label = new_label ()
+      let else_label = new_label ()
       and end_label = new_label () in
       tr_expr env venv c
-      @@ beqz t0 end_label
+      @@ beqz t0 else_label
       @@ tr_seq env venv s1
       @@ b end_label
-      @@ label then_label
+      @@ label else_label
       @@ tr_seq env venv s2
       @@ label end_label
 

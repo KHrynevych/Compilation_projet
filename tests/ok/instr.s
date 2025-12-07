@@ -36,7 +36,7 @@ _label_1:
   lw   $t1, 0($sp)
   addi $sp, $sp, 4
   sne  $t0, $t0, $t1
-  beqz $t0, _label_3
+  beqz $t0, _label_2
   lw   $t0, -12($fp)
   addi $sp, $sp, -4
   sw   $t0, 0($sp)

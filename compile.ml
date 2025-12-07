@@ -138,7 +138,16 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
 
   | New sname -> failwith "A compléter: New"
 
-  | Call (fid, args) -> failwith "A compléter: Call"
+  | Call (fid, args) -> 
+    let label = Env.find fid.id env.fenv in 
+    let code_args = List.fold_left (fun code arg ->
+        code @@ tr_expr env venv arg @@ push t0
+    ) nop args in
+
+    code_args
+    @@ jal label                           (* saut vers la fonction et sauvegarde adresse retour *)
+    @@ addi sp sp (4 * List.length args)   (* nettoyage de la pile (arguments) *)
+
 
   | Print el ->
       (* imprimer tous les arguments comme des entiers pour le moment *)
@@ -276,27 +285,40 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
       tr_expr env venv e
       @@ addi t0 t0 (-1)
 
-  | Return [] -> li v0 10 @@ syscall
+  | Return [] -> 
+      move sp fp
+      @@ pop fp
+      @@ pop ra
+      @@ jr ra               (* retour à l'appelant *)
 
   | Return [e] ->
       tr_expr env venv e
-      @@ move a0 t0
-      @@ li v0 1 @@ syscall
-      @@ li v0 10 @@ syscall
+      @@ move sp fp
+      @@ pop fp
+      @@ pop ra
+      @@ jr ra               (* retour à l'appelant *)
 
   | Return _ -> failwith "A compléter: Return avec plusieurs valeurs"
 
-(* Compilation d'une fonction, puis d'une liste de déclarations *)
+(* compilation d'une fonction, puis d'une liste de déclarations *)
 
 let tr_fun (env:cenv) (f:func_def) : asm =
   let lbl = Env.find f.fname.id env.fenv in
   let venv, locals_size = build_venv f in
   label lbl
-  @@ move fp sp
+  @@ push ra                     (* sauvegarde de l'adresse de retour *)
+  @@ push fp                     (* sauvegarde de l'ancien frame pointer *)
+  @@ move fp sp                  (* le fp pointe vers la nouvelle base de pile *)
+  (* allocation des variables locales *)
   @@ (if locals_size > 0
       then addi sp sp (-locals_size)
       else nop)
   @@ tr_seq env venv f.body
+  (* après l'appel à la fonction; utilisé seulement quand il n'y a pas de return *)
+  @@ move sp fp
+  @@ pop fp
+  @@ pop ra
+  @@ jr ra               (* retour à l'appelant *)
 
 let rec tr_ldecl (env:cenv) (p:decl list) : asm =
   match p with
@@ -308,6 +330,10 @@ let tr_prog (p:decl list) : program =
   let senv = build_struct_env p in
   let fenv = build_func_env p in
   let env  = { senv; fenv } in
-  let text = tr_ldecl env p in
+  let text = 
+    jal "main"
+    @@ li v0 10
+    @@ syscall
+    @@ tr_ldecl env p in
   let data = nop (* pour le moment pas de données statiques *) in
   { text; data }

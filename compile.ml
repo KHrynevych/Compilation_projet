@@ -64,6 +64,21 @@ let field_offset (env:cenv) sname fname =
   | Some off -> off
   | None -> failwith ("unknown field "^fname^" in struct "^sname)
 
+let field_offset_by_name (env : cenv) (fname : string) : int =
+  let res =
+    Env.fold (fun _sname sinfo acc ->
+              match acc with
+              | Some _ -> acc
+              | None ->
+                  match List.assoc_opt fname sinfo.fields with
+                  | Some off -> Some off
+                  | None -> None)
+      env.senv None
+  in
+  match res with
+  | Some off -> off
+  | None -> failwith ("unknown field "^fname)
+
 (* pré-passage : collecte des variables locales d'une fonction *)
 
 let rec collect_seq (s:seq) ((venv, next_off) : venv * int) : venv * int =
@@ -150,7 +165,10 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
 
   | Var id -> load_var venv id.id
 
-  | Dot (e1, fid) -> failwith "A compléter: Dot"
+  | Dot (e1, fid) ->
+      let off = field_offset_by_name env fid.id in
+      tr_expr env venv e1
+      @@ lw t0 off t0
 
   | New sname -> failwith "A compléter: New"
 
@@ -313,7 +331,15 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
               tr_expr env venv er
               @@ (match el.edesc with
               | Var id -> store_var venv id.id
-              | _ -> failwith "unsupported lvalue in Set (only variables for now)")
+              | Dot (e1, fid) ->
+                (* on veut que : base = e1 et écrire la valeur (déjà dans $t0) à l'offset du champ *)
+                let off = field_offset_by_name env fid.id in
+                push t0
+                @@ tr_expr env venv e1
+                @@ move t1 t0
+                @@ pop t0
+                @@ sw t0 off t1
+              | _ -> failwith "unsupported lvalue in Set (only variables/fields for now)")
               @@ aux ql qr
               | [], _ :: _
               | _ :: _, [] -> failwith "arity mismatch in Set"
@@ -345,13 +371,40 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
   | Block s -> tr_seq env venv s
 
   | Inc e -> 
-      tr_expr env venv e
-      @@ addi t0 t0 1
+      (match e.edesc with
+       | Var id ->
+           (* x++ *)
+           load_var venv id.id
+           @@ addi t0 t0 1
+           @@ store_var venv id.id
+       | Dot (e1, fid) ->
+           (* r.quo++ *)
+           let off = field_offset_by_name env fid.id in
+           tr_expr env venv e1
+           @@ move t1 t0
+           @@ lw t0 off t0
+           @@ addi t0 t0 1
+           @@ sw t0 off t1
+       | _ -> failwith "++ must target a variable or a field")
       
 
   | Dec e -> 
-      tr_expr env venv e
-      @@ addi t0 t0 (-1)
+       (match e.edesc with
+       | Var id ->
+           (* x-- *)
+           load_var venv id.id
+           @@ addi t0 t0 (-1)
+           @@ store_var venv id.id
+       | Dot (e1, fid) ->
+           (* r.quo-- *)
+           let off = field_offset_by_name env fid.id in
+           tr_expr env venv e1
+           @@ move t1 t0
+           @@ lw t0 off t0
+           @@ addi t0 t0 (-1)
+           @@ sw t0 off t1
+       | _ ->
+           failwith "-- must target a variable or a field")
 
   | Return e ->
       let n = List.length e in

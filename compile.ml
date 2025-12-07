@@ -170,13 +170,18 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
       let rec print_list = function
         | [] -> nop
         | e1 :: q ->
-            tr_expr env venv e1
-            @@ move a0 t0
-            @@ li v0 1 @@ syscall
-            @@ print_list q
+          tr_expr env venv e1
+          @@ move a0 t0
+          @@ (match e1.edesc with
+              | Int _| Var _ | Bool _ | Binop _ | Unop _| Call _-> 
+                li v0 1 @@ syscall
+              | String _ -> li v0 4 @@ syscall
+              | _ -> failwith "Impossible de print ce type..."
+              )
+          @@ print_list q
       in
       print_list el
-      @@ li t0 0  (* valeur de retour de Print : 0 pour le moment *)
+      @@ li t0 0
 
   | Unop (op, e1) ->
       begin match op with

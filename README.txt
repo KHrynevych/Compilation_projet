@@ -16,7 +16,10 @@ cela nous a donné beaucoup de mal à terminer à temps.
 
 Détails importants (parties du projet pouvant présenter des dysfonctionnements):
 print:
-Nous avons eu l'idée d'associer une opération, un bool ou un int à une impression de int. Cela fait que 
+Nous n'avons pas réussi à faire imprimer tous les types: 
+- Les appels de fonctions marchent seulement pour des booléens ou des entiers
+- Les booléens renvoient 1 si vrai, 0 sinon.
+- Les chaines de caractères
 
 tests:
 nous manquons probablement de tests, mais ceux que nous avons ajoutés vérifient:

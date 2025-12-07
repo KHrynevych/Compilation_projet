@@ -37,6 +37,11 @@ main:
   addi $sp, $sp, 4
   sub  $t0, $t0, $t1
   sw   $t0, -4($fp)
+  lw   $t0, -4($fp)
+  move $a0, $t0
+  li   $v0, 1
+  syscall
+  li   $t0, 0
   li   $t0, 3
   addi $sp, $sp, -4
   sw   $t0, 0($sp)
@@ -51,6 +56,11 @@ main:
   addi $sp, $sp, 4
   mul  $t0, $t0, $t1
   sw   $t0, -4($fp)
+  lw   $t0, -4($fp)
+  move $a0, $t0
+  li   $v0, 1
+  syscall
+  li   $t0, 0
   li   $t0, 6
   addi $sp, $sp, -4
   sw   $t0, 0($sp)
@@ -83,6 +93,11 @@ main:
   addi $sp, $sp, 4
   or  $t0, $t0, $t1
   sw   $t0, -8($fp)
+  lw   $t0, -8($fp)
+  move $a0, $t0
+  li   $v0, 1
+  syscall
+  li   $t0, 0
   li   $t0, 1
   beqz $t0, _label_0
   li   $t0, 0
@@ -91,9 +106,19 @@ _label_0:
   li   $t0, 1
 _label_1:
   sw   $t0, -8($fp)
+  lw   $t0, -8($fp)
+  move $a0, $t0
+  li   $v0, 1
+  syscall
+  li   $t0, 0
   lw   $t0, -4($fp)
   sub  $t0, $zero, $t0
   sw   $t0, -4($fp)
+  lw   $t0, -4($fp)
+  move $a0, $t0
+  li   $v0, 1
+  syscall
+  li   $t0, 0
   move $sp, $fp
   lw   $fp, 0($sp)
   addi $sp, $sp, 4

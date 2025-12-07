@@ -118,8 +118,6 @@ let empty_data = nop
 let add_string (data:data_acc) (lbl:string) (s:string) : data_acc =
   data @@ Mips.label lbl @@ asciiz s
 
-let sub r1 r2 r3 = S (Printf.sprintf "  sub  %s, %s, %s" r1 r2 r3)
-
 let zero = "$zero"
 
 let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
@@ -180,9 +178,15 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
         | Mul -> mul
         | Lt  -> slt
         | And -> and_
-        | Sub | Div | Rem
-        | Le  | Gt | Ge | Eq | Neq | Or ->
-            failwith "A compléter: autres opérateurs binaires"
+        | Sub -> sub
+        | Div -> div
+        | Rem -> rem
+        | Le  -> sle
+        | Gt  -> sgt
+        | Ge  -> sge
+        | Eq  -> seq
+        | Neq -> sne
+        | Or  -> or_
       in
       tr_expr env venv e2
       @@ push t0

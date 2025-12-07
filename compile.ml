@@ -170,17 +170,35 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
       tr_expr env venv e1
       @@ lw t0 off t0
 
-  | New sname -> failwith "A compléter: New"
+  | New sname ->
+    let sinfo = lookup_struct env sname in
+    malloc sinfo.size
 
-  | Call (fid, args) -> 
-    let label = Env.find fid.id env.fenv in 
-    let code_args = List.fold_left (fun code arg ->
-        code @@ tr_expr env venv arg @@ push t0
-    ) nop args in
-
-    code_args
-    @@ jal label                           (* saut vers la fonction et sauvegarde adresse retour *)
-    @@ addi sp sp (4 * List.length args)   (* nettoyage de la pile (arguments) *)
+  | Call (fid, args) ->
+      if fid.id = "new" then
+        (* new(T) *)
+        (match args with
+         | [ { edesc = Var id; _ } ] ->
+             (* id doit être le nom d'une struct connue *)
+             let sinfo = lookup_struct env id.id in
+             malloc sinfo.size
+         | _ -> failwith "new expects a single struct name")
+      else
+        (* appel de fonction normale *)
+        let label =
+          match Env.find_opt fid.id env.fenv with
+          | Some l -> l
+          | None -> failwith ("unknown function "^fid.id)
+        in
+        let code_args =
+          List.fold_left
+            (fun code arg ->
+               code @@ tr_expr env venv arg @@ push t0)
+            nop args
+        in
+        code_args
+        @@ jal label
+        @@ addi sp sp (4 * List.length args)
 
 
   | Print el ->

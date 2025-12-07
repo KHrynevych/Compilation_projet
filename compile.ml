@@ -267,9 +267,14 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
 
   | Block s -> tr_seq env venv s
 
-  | Inc e -> failwith "A compléter: Inc"
+  | Inc e -> 
+      tr_expr env venv e
+      @@ addi t0 t0 1
+      
 
-  | Dec e -> failwith "A compléter: Dec"
+  | Dec e -> 
+      tr_expr env venv e
+      @@ addi t0 t0 (-1)
 
   | Return [] -> li v0 10 @@ syscall
 

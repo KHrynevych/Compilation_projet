@@ -64,7 +64,7 @@ let field_offset (env:cenv) sname fname =
   | Some off -> off
   | None -> failwith ("unknown field "^fname^" in struct "^sname)
 
-(* Pré-passage : collecte des variables locales d'une fonction *)
+(* pré-passage : collecte des variables locales d'une fonction *)
 
 let rec collect_seq (s:seq) ((venv, next_off) : venv * int) : venv * int =
   List.fold_left
@@ -93,22 +93,15 @@ let rec collect_seq (s:seq) ((venv, next_off) : venv * int) : venv * int =
     (venv, next_off) s
 
 let build_venv (f:func_def) : venv * int =
-  (* 1. Construction de l'environnement des paramètres *)
-  (* Le dernier paramètre empilé est à l'offset 8($fp) (juste au dessus de RA et FP).
-     Comme Call empile dans l'ordre de la liste, le dernier élément de f.params
-     est celui qui a l'offset 8. *)
   let rec add_params env l offset =
     match l with
     | [] -> env
     | (id, _)::q -> 
-        (* On ajoute le paramètre courant et on augmente l'offset pour le suivant (qui est 'avant' dans la liste d'origine) *)
         add_params (Env.add id.id offset env) q (offset + 4)
   in
-  (* On inverse la liste des paramètres pour commencer par le dernier (offset 8) et remonter *)
+  (* on inverse la liste des paramètres pour commencer par le dernier (offset 8 (4*2 pour sp et fp)) et remonter *)
   let param_env = add_params Env.empty (List.rev f.params) 8 in
 
-  (* 2. Ajout des variables locales (offsets négatifs) *)
-  (* on part de param_env au lieu de Env.empty *)
   let venv, next_off = collect_seq f.body (param_env, 0) in
   let locals_size = -next_off in  (* locals_size >= 0 *)
   (venv, locals_size)
@@ -122,6 +115,13 @@ let store_var (venv:venv) (name:string) : asm =
   match Env.find_opt name venv with
   | Some off -> sw t0 off fp
   | None -> failwith ("unknown variable "^name)
+
+
+let malloc size =
+  li a0 size
+  @@ li v0 9
+  @@ syscall
+  @@ move t0 v0
 
 
 (* Compilation des expressions *)
@@ -237,36 +237,83 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
         | _ :: _ -> failwith "unexpected non-expression initializer in Vars"
       in
       let inits = extract_inits [] body in
-      let rec init ids inits =
-        match ids, inits with
-        | [], [] -> nop
-        | id :: ids', e :: es ->
+      (* cas special pour l'affectation multiple via un appel de fonction *)
+      (* ex: var x, y = f() *)
+      (match inits with
+       | [ { edesc = Call (_, _); _ } ] when List.length ids > 1 ->
+           tr_expr env venv (List.hd inits)
+           @@ push t0
+           @@ (
+             let rec unpack i = function
+               | [] -> nop
+               | id :: q ->
+                   lw t1 0(sp)
+                   @@ lw t0 (i*4) t1
+                   @@ store_var venv id.id
+                   @@ unpack (i+1) q
+             in
+             unpack 0 ids
+           )
+           @@ addi sp sp 4
+
+       | _ -> 
+        let rec init ids inits =
+          match ids, inits with
+          | [], [] -> nop
+          | id :: ids', e :: es ->
             tr_expr env venv e
             @@ store_var venv id.id
             @@ init ids' es
-        | id :: ids', [] ->
+          | id :: ids', [] ->
             (* 0 par défaut *)
             li t0 0
             @@ store_var venv id.id
             @@ init ids' []
-        | [], _ :: _ -> failwith "too many initializers in Vars"
+          | [], _ :: _ -> failwith "too many initializers in Vars"
       in
       init ids inits
+      )
+      
 
   | Set (lhs, rhs) ->
-      let rec aux lhs rhs =
+      (* cas special pour l'affectation multiple via un appel de fonction *)
+      (* ex: x, y := f() *)
+      (
         match lhs, rhs with
-        | [], [] -> nop
-        | el :: ql, er :: qr ->
-            tr_expr env venv er
-            @@ (match el.edesc with
-                | Var id -> store_var venv id.id
-                | _ -> failwith "unsupported lvalue in Set (only variables for now)")
-            @@ aux ql qr
-        | [], _ :: _
-        | _ :: _, [] -> failwith "arity mismatch in Set"
-      in
-      aux lhs rhs
+        | vars, [ { edesc = Call (_, _); _ } ] when List.length vars > 1 ->
+           tr_expr env venv (List.hd rhs)
+           @@ push t0
+           @@ (
+             let rec unpack i = function
+               | [] -> nop
+               | var_expr :: q ->
+                   (match var_expr.edesc with
+                    | Var id ->
+                        lw t1 0(sp)
+                        @@ lw t0 (i*4) t1
+                        @@ store_var venv id.id
+                    | _ -> failwith "Only variables allowed in multiple assignment")
+                   @@ unpack (i+1) q
+             in
+             unpack 0 vars
+           )
+           @@ addi sp sp 4
+
+        | _ -> 
+          let rec aux lhs rhs =
+            match lhs, rhs with
+            | [], [] -> nop
+            | el :: ql, er :: qr ->
+              tr_expr env venv er
+              @@ (match el.edesc with
+              | Var id -> store_var venv id.id
+              | _ -> failwith "unsupported lvalue in Set (only variables for now)")
+              @@ aux ql qr
+              | [], _ :: _
+              | _ :: _, [] -> failwith "arity mismatch in Set"
+            in
+            aux lhs rhs
+        )
 
   | If (c, s1, s2) ->
       let else_label = new_label ()
@@ -300,20 +347,32 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
       tr_expr env venv e
       @@ addi t0 t0 (-1)
 
-  | Return [] -> 
-      move sp fp
-      @@ pop fp
-      @@ pop ra
-      @@ jr ra               (* retour à l'appelant *)
-
-  | Return [e] ->
-      tr_expr env venv e
-      @@ move sp fp
-      @@ pop fp
-      @@ pop ra
-      @@ jr ra               (* retour à l'appelant *)
-
-  | Return _ -> failwith "A compléter: Return avec plusieurs valeurs"
+  | Return e ->
+      let n = List.length e in
+      if n = 0 then
+        move sp fp @@ pop fp @@ pop ra @@ jr ra
+      else if n = 1 then
+        tr_expr env venv (List.hd e)
+        @@ move sp fp @@ pop fp @@ pop ra @@ jr ra
+      else
+        (* return multiple : allocation d'un n-uplet *)
+        let size = n * 4 in
+        let code_list = 
+          List.mapi (fun i e ->
+            tr_expr env venv e
+            @@ lw t1 0(sp)
+            @@ sw t0 (i * 4) t1
+          ) e 
+        in
+        let code_store = List.fold_left (@@) nop code_list in
+        malloc size
+        @@ push t0
+        @@ code_store
+        @@ pop t0
+        @@ move sp fp
+        @@ pop fp
+        @@ pop ra
+        @@ jr ra
 
 (* compilation d'une fonction, puis d'une liste de déclarations *)
 

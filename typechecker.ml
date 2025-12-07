@@ -228,7 +228,7 @@ let rec check_instr ~(fmt_imported:bool) (senv:senv) (fenv:fenv) (ret:typ list) 
       (match t_opt, inits with
       | None, [] ->
           error i.iloc "untyped variables require initial values"
-      | None, [ { edesc = Call (fid, args); _ } as ecall ] ->
+      | None, [ { edesc = Call (fid, args); _ } ] ->
           (* cas multi-retour : x,y := f(...) *)
           let rtys = call_signature ~fmt_imported senv fenv tenv fid args in
           if List.length rtys <> n_ids then

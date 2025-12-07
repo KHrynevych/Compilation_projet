@@ -127,13 +127,11 @@ let malloc size =
 (* Compilation des expressions *)
 
 type data_acc = asm
-
 let empty_data = nop
 
-let add_string (data:data_acc) (lbl:string) (s:string) : data_acc =
-  data @@ Mips.label lbl @@ asciiz s
-
 let zero = "$zero"
+
+let string_data :(string * string) list ref = ref []
 
 let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
   match e.edesc with
@@ -143,7 +141,10 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
       let v = if b then 1 else 0 in
       li t0 v
 
-  | String s -> failwith "A compléter: String"
+  | String s ->
+    let lbl = new_label () in
+    string_data := (lbl, s) :: !string_data;
+    la t0 lbl
 
   | Nil -> li t0 0
 
@@ -409,5 +410,9 @@ let tr_prog (p:decl list) : program =
     @@ li v0 10
     @@ syscall
     @@ tr_ldecl env p in
-  let data = nop (* pour le moment pas de données statiques *) in
+  let data = 
+    List.fold_left (fun acc (lbl, str) -> 
+      acc @@ label lbl @@ asciiz str
+    ) nop !string_data
+  in
   { text; data }

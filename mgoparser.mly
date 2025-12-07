@@ -30,7 +30,7 @@
 %left PLUS MINUS
 %left STAR SLASH PERCENT
 %left POINT
-%nonassoc NOT
+%nonassoc NOT UMINUS
 
 
 %%
@@ -181,7 +181,7 @@ expr_desc:
 | id=ident LPAR exl=loption(expr_list) RPAR {Call(id, exl)}
 | FMTPRINT LPAR ex_li=expr_list RPAR {Print(ex_li)}
 | NOT ex=expr {Unop(Not, ex)}
-| MINUS ex=expr {Unop(Opp, ex)}
+| MINUS ex=expr %prec UMINUS {Unop(Opp, ex)}
 
 | ex1=expr PLUS ex2=expr {Binop(Add, ex1, ex2)}
 | ex1=expr MINUS ex2=expr {Binop(Sub, ex1, ex2)}

@@ -72,6 +72,11 @@ let empty_data = nop
 let add_string (data:data_acc) (lbl:string) (s:string) : data_acc =
   data @@ Mips.label lbl @@ asciiz s
 
+let sub r1 r2 r3 =
+  S (Printf.sprintf "  sub  %s, %s, %s" r1 r2 r3)
+
+let zero = "$zero"
+
 let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
   match e.edesc with
   | Int n -> li t0 (Int64.to_int n)
@@ -92,9 +97,36 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
 
   | Call (fid, args) -> failwith "A compléter: Call"
 
-  | Print el -> failwith "A compléter: Print"
+  | Print el ->
+      (* imprimer tous les arguments comme des entiers pour le moment *)
+      let rec print_list = function
+        | [] -> nop
+        | e1 :: q ->
+            tr_expr env venv e1
+            @@ move a0 t0
+            @@ li v0 1 @@ syscall
+            @@ print_list q
+      in
+      print_list el
+      @@ li t0 0  (* valeur de retour de Print : 0 pour le moment *)
 
-  | Unop (op, e1) -> failwith "A compléter: Unop"
+  | Unop (op, e1) ->
+      begin match op with
+      | Opp ->
+          (* $t0 := - (valeur de e1)  ->  sub $t0, $zero, $t0 *)
+          tr_expr env venv e1
+          @@ sub t0 zero t0
+      | Not ->
+          let l_true = new_label () in
+          let l_end  = new_label () in
+          tr_expr env venv e1
+          @@ beqz t0 l_true
+          @@ li t0 0
+          @@ b l_end
+          @@ label l_true
+          @@ li t0 1
+          @@ label l_end
+      end
 
   | Binop (bop, e1, e2) ->
       let op =
@@ -123,8 +155,7 @@ and tr_seq (env:cenv) (venv:venv) (s:seq) : asm =
 
 and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
   match i.idesc with
-  | Expr e ->
-      tr_expr env venv e
+  | Expr e -> tr_expr env venv e
 
   | Vars (ids, _topt, body) -> failwith "A compléter: Vars"
 
@@ -190,5 +221,5 @@ let tr_prog (p:decl list) : program =
   let fenv = build_func_env p in
   let env  = { senv; fenv } in
   let text = tr_ldecl env p in
-  let data = nop (* pour l’instant, pas de données statiques *) in
+  let data = nop (* pour le moment pas de données statiques *) in
   { text; data }

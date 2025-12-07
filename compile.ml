@@ -19,6 +19,7 @@ type cenv = {
 type venv = int Env.t
 
 let word_size = 4
+let fp = "$fp"
 
 let new_label =
   let cpt = ref (-1) in
@@ -63,6 +64,51 @@ let field_offset (env:cenv) sname fname =
   | Some off -> off
   | None -> failwith ("unknown field "^fname^" in struct "^sname)
 
+(* Pré-passage : collecte des variables locales d'une fonction *)
+
+let rec collect_seq (s:seq) ((venv, next_off) : venv * int) : venv * int =
+  List.fold_left
+    (fun (env, off) i ->
+       match i.idesc with
+       | Vars (ids, _topt, body) ->
+           (* chaque identifiant reçoit un offset négatif supplémentaire *)
+           let env', off' =
+             List.fold_left
+               (fun (e, o) id ->
+                  let o' = o - word_size in
+                  (Env.add id.id o' e, o'))
+               (env, off) ids
+           in
+           collect_seq body (env', off')
+
+       | Block s' -> collect_seq s' (env, off)
+
+       | If (_, s1, s2) ->
+           let env1, off1 = collect_seq s1 (env, off) in
+           collect_seq s2 (env1, off1)
+
+       | For (_, s') -> collect_seq s' (env, off)
+
+       | _ -> (env, off))
+    (venv, next_off) s
+
+let build_venv (f:func_def) : venv * int =
+  (* on part de next_off = 0, on descend de -4 en -4 *)
+  let venv, next_off = collect_seq f.body (Env.empty, 0) in
+  let locals_size = -next_off in  (* locals_size >= 0 *)
+  (venv, locals_size)
+
+let load_var (venv:venv) (name:string) : asm =
+  match Env.find_opt name venv with
+  | Some off -> lw t0 off fp
+  | None -> failwith ("unknown variable "^name)
+
+let store_var (venv:venv) (name:string) : asm =
+  match Env.find_opt name venv with
+  | Some off -> sw t0 off fp
+  | None -> failwith ("unknown variable "^name)
+
+
 (* Compilation des expressions *)
 
 type data_acc = asm
@@ -72,8 +118,7 @@ let empty_data = nop
 let add_string (data:data_acc) (lbl:string) (s:string) : data_acc =
   data @@ Mips.label lbl @@ asciiz s
 
-let sub r1 r2 r3 =
-  S (Printf.sprintf "  sub  %s, %s, %s" r1 r2 r3)
+let sub r1 r2 r3 = S (Printf.sprintf "  sub  %s, %s, %s" r1 r2 r3)
 
 let zero = "$zero"
 
@@ -89,7 +134,7 @@ let rec tr_expr (env:cenv) (venv:venv) (e:expr) : asm =
 
   | Nil -> li t0 0
 
-  | Var id -> failwith "A compléter: Var"
+  | Var id -> load_var venv id.id
 
   | Dot (e1, fid) -> failwith "A compléter: Dot"
 
@@ -157,9 +202,43 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
   match i.idesc with
   | Expr e -> tr_expr env venv e
 
-  | Vars (ids, _topt, body) -> failwith "A compléter: Vars"
+  | Vars (ids, _topt, body) ->
+      let rec extract_inits acc = function
+        | [] -> List.rev acc
+        | { idesc = Expr e; _ } :: q -> extract_inits (e :: acc) q
+        | _ :: _ -> failwith "unexpected non-expression initializer in Vars"
+      in
+      let inits = extract_inits [] body in
+      let rec init ids inits =
+        match ids, inits with
+        | [], [] -> nop
+        | id :: ids', e :: es ->
+            tr_expr env venv e
+            @@ store_var venv id.id
+            @@ init ids' es
+        | id :: ids', [] ->
+            (* 0 par défaut *)
+            li t0 0
+            @@ store_var venv id.id
+            @@ init ids' []
+        | [], _ :: _ -> failwith "too many initializers in Vars"
+      in
+      init ids inits
 
-  | Set (lhs, rhs) -> failwith "A compléter: Set"
+  | Set (lhs, rhs) ->
+      let rec aux lhs rhs =
+        match lhs, rhs with
+        | [], [] -> nop
+        | el :: ql, er :: qr ->
+            tr_expr env venv er
+            @@ (match el.edesc with
+                | Var id -> store_var venv id.id
+                | _ -> failwith "unsupported lvalue in Set (only variables for now)")
+            @@ aux ql qr
+        | [], _ :: _
+        | _ :: _, [] -> failwith "arity mismatch in Set"
+      in
+      aux lhs rhs
 
   | If (c, s1, s2) ->
       let then_label = new_label ()
@@ -188,8 +267,7 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
 
   | Dec e -> failwith "A compléter: Dec"
 
-  | Return [] ->
-      li v0 10 @@ syscall
+  | Return [] -> li v0 10 @@ syscall
 
   | Return [e] ->
       tr_expr env venv e
@@ -197,24 +275,25 @@ and tr_instr (env:cenv) (venv:venv) (i:instr) : asm =
       @@ li v0 1 @@ syscall
       @@ li v0 10 @@ syscall
 
-  | Return _ ->
-      failwith "A compléter: Return avec plusieurs valeurs"
+  | Return _ -> failwith "A compléter: Return avec plusieurs valeurs"
 
 (* Compilation d'une fonction, puis d'une liste de déclarations *)
 
 let tr_fun (env:cenv) (f:func_def) : asm =
   let lbl = Env.find f.fname.id env.fenv in
-  let venv = Env.empty in
+  let venv, locals_size = build_venv f in
   label lbl
+  @@ move fp sp
+  @@ (if locals_size > 0
+      then addi sp sp (-locals_size)
+      else nop)
   @@ tr_seq env venv f.body
 
 let rec tr_ldecl (env:cenv) (p:decl list) : asm =
   match p with
   | [] -> nop
-  | Fun df :: q ->
-      tr_fun env df @@ tr_ldecl env q
-  | Struct _ :: q ->
-      tr_ldecl env q
+  | Fun df :: q -> tr_fun env df @@ tr_ldecl env q
+  | Struct _ :: q -> tr_ldecl env q
 
 let tr_prog (p:decl list) : program =
   let senv = build_struct_env p in

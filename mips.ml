@@ -58,7 +58,7 @@ let rec ilist = function
     | [i]    -> sprintf "%d" i
     | i :: l -> sprintf "%d, %s" i (ilist l)
 let dword l  = S(sprintf "  .word %s" (ilist l))
-let asciiz s = S(sprintf "  .asciiz %s" s)
+let asciiz s = S(sprintf "  .asciiz \"%s\"" (String.escaped s))
 
 let push r =
     addi sp sp (-4) @@ sw r 0(sp)

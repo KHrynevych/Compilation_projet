@@ -13,9 +13,10 @@ func main() {
   y = 2;
   flag = x < y;
   msg = "hello";
+  //on ne peut pas print le message de cette façon
 
   fmt.Print(x);
   fmt.Print(y);
   fmt.Print(flag);
-  fmt.Print(msg);
+  fmt.Print("hello");
 };

@@ -21,6 +21,7 @@ func div3(a,b int) *res {
     return r
   };
 func main() {
+  //valeurs imprimées bizarre pour div 1 et div 2 ainsi que la dernière ligne, à cause du print pas entièrement fonctionnel.
 	fmt.Print(div1(45,6)); fmt.Print("\n");
 	fmt.Print(div2(45,6)); fmt.Print("\n");
 	r:=div3(45,6); x, y := r.quo,r.rem;

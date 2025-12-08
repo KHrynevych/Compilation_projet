@@ -457,9 +457,9 @@ let tr_fun (env:cenv) (f:func_def) : asm =
   let lbl = Env.find f.fname.id env.fenv in
   let venv, locals_size = build_venv f in
   label lbl
-  @@ push ra                     (* sauvegarde de l'adresse de retour *)
-  @@ push fp                     (* sauvegarde de l'ancien frame pointer *)
-  @@ move fp sp                  (* le fp pointe vers la nouvelle base de pile *)
+  @@ push ra
+  @@ push fp
+  @@ move fp sp
   (* allocation des variables locales *)
   @@ (if locals_size > 0
       then addi sp sp (-locals_size)
